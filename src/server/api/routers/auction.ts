@@ -1,6 +1,12 @@
+import { TRPCError } from "@trpc/server";
+
 import { createAuctionSchema } from "~/lib/auctions/schema";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
-import { getPublicImageUrl } from "~/server/storage/supabase";
+import {
+  getPublicImageUrl,
+  getStorageBucket,
+  getSupabaseAdminClient,
+} from "~/server/storage/supabase";
 
 export const auctionRouter = createTRPCRouter({
   listOpen: publicProcedure.query(async ({ ctx }) => {
@@ -40,30 +46,64 @@ export const auctionRouter = createTRPCRouter({
   create: protectedProcedure
     .input(createAuctionSchema)
     .mutation(async ({ ctx, input }) => {
-      const auction = await ctx.db.auction.create({
-        data: {
-          sellerId: ctx.session.user.id,
-          title: input.title.trim(),
-          description: input.description?.trim() ?? null,
-          imagePath: input.imagePath,
-          startPriceCents: input.startPriceCents,
-          currentPriceCents: input.startPriceCents,
-          minIncrementCents: input.minIncrementCents,
-          endsAt: input.endsAt,
-        },
-        select: {
-          id: true,
-          title: true,
-          endsAt: true,
-          imagePath: true,
-          startPriceCents: true,
-          currentPriceCents: true,
-        },
-      });
+      const imagePathPrefix = `${ctx.session.user.id}/`;
+      if (!input.imagePath.startsWith(imagePathPrefix)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Invalid artwork image path",
+        });
+      }
 
-      return {
-        ...auction,
-        imageUrl: getPublicImageUrl(auction.imagePath),
-      };
+      try {
+        const auction = await ctx.db.auction.create({
+          data: {
+            sellerId: ctx.session.user.id,
+            title: input.title.trim(),
+            description: input.description?.trim() ?? null,
+            imagePath: input.imagePath,
+            startPriceCents: input.startPriceCents,
+            currentPriceCents: input.startPriceCents,
+            minIncrementCents: input.minIncrementCents,
+            endsAt: input.endsAt,
+          },
+          select: {
+            id: true,
+            title: true,
+            endsAt: true,
+            imagePath: true,
+            startPriceCents: true,
+            currentPriceCents: true,
+          },
+        });
+
+        return {
+          ...auction,
+          imageUrl: getPublicImageUrl(auction.imagePath),
+        };
+      } catch (error) {
+        try {
+          const { error: cleanupError } = await getSupabaseAdminClient()
+            .storage
+            .from(getStorageBucket())
+            .remove([input.imagePath]);
+
+          if (cleanupError) {
+            console.error(
+              `[AUCTION_CREATE] Failed to clean up uploaded image ${input.imagePath}: ${cleanupError.message}`,
+            );
+          }
+        } catch (cleanupError) {
+          console.error(
+            `[AUCTION_CREATE] Failed to run image cleanup for ${input.imagePath}`,
+            cleanupError,
+          );
+        }
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Could not create auction. Please try again.",
+          cause: error,
+        });
+      }
     }),
 });

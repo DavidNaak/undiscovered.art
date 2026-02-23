@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
-  MAX_UPLOAD_FILE_BYTES,
-  isAllowedImageMimeType,
+  createArtworkUploadSchema,
 } from "~/lib/auctions/schema";
 import { auth } from "~/server/better-auth";
 import {
@@ -13,10 +12,23 @@ import {
 
 export const runtime = "nodejs";
 
-function getExtension(fileName: string): string {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-  if (!extension || extension.length > 8) return "jpg";
-  return extension;
+const MIME_TYPE_TO_EXTENSION: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+
+function getExtension(fileName: string, mimeType: string): string {
+  const extension = fileName
+    .split(".")
+    .pop()
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  if (extension && extension.length <= 8) return extension;
+  const fallbackExtension = MIME_TYPE_TO_EXTENSION[mimeType];
+  if (fallbackExtension) return fallbackExtension;
+  return "jpg";
 }
 
 export async function POST(request: Request) {
@@ -25,25 +37,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const formData = await request.formData();
-  const maybeFile = formData.get("file");
-  if (!(maybeFile instanceof File)) {
-    return NextResponse.json({ error: "File is required" }, { status: 400 });
-  }
-
-  if (!isAllowedImageMimeType(maybeFile.type)) {
-    return NextResponse.json(
-      { error: "Only jpeg, png, webp, and gif files are supported" },
-      { status: 400 },
-    );
-  }
-
-  if (maybeFile.size > MAX_UPLOAD_FILE_BYTES) {
+  const payload = (await request.json().catch(() => null)) as unknown;
+  const parsedPayload = createArtworkUploadSchema.safeParse(payload);
+  if (!parsedPayload.success) {
     return NextResponse.json(
       {
-        error: `File is too large. Max size is ${Math.floor(
-          MAX_UPLOAD_FILE_BYTES / (1024 * 1024),
-        )}MB`,
+        error: parsedPayload.error.issues[0]?.message ?? "Invalid upload request",
       },
       { status: 400 },
     );
@@ -52,26 +51,27 @@ export async function POST(request: Request) {
   try {
     const bucket = getStorageBucket();
     const supabase = getSupabaseAdminClient();
-    const extension = getExtension(maybeFile.name);
+    const extension = getExtension(
+      parsedPayload.data.fileName,
+      parsedPayload.data.fileType,
+    );
     const imagePath = `${session.user.id}/${crypto.randomUUID()}.${extension}`;
 
-    const buffer = Buffer.from(await maybeFile.arrayBuffer());
-    const { error } = await supabase.storage.from(bucket).upload(imagePath, buffer, {
-      contentType: maybeFile.type,
-      upsert: false,
-      cacheControl: "3600",
-    });
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUploadUrl(imagePath, { upsert: false });
 
     if (error) {
       return NextResponse.json(
-        { error: `Upload failed: ${error.message}` },
+        { error: `Could not prepare upload: ${error.message}` },
         { status: 500 },
       );
     }
 
     return NextResponse.json({
-      imagePath,
-      imageUrl: getPublicImageUrl(imagePath),
+      imagePath: data.path,
+      signedUrl: data.signedUrl,
+      imageUrl: getPublicImageUrl(data.path),
     });
   } catch (error) {
     const message =

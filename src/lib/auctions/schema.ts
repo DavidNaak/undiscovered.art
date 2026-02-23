@@ -36,6 +36,26 @@ export const createAuctionFormSchema = z.object({
   endsAt: z.string().trim().min(1, "End time is required"),
 });
 
+export const createArtworkUploadSchema = z.object({
+  fileName: z
+    .string()
+    .trim()
+    .min(1, "File name is required")
+    .max(255, "File name is too long"),
+  fileType: z
+    .string()
+    .trim()
+    .refine(
+      (value) => isAllowedImageMimeType(value),
+      "Only jpeg, png, webp, and gif files are supported",
+    ),
+  fileSize: z
+    .number()
+    .int()
+    .positive("File is required")
+    .max(MAX_UPLOAD_FILE_BYTES, "Image is too large. Max size is 5MB"),
+});
+
 export const createAuctionSchema = z
   .object({
     title: z
