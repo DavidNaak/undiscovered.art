@@ -1,12 +1,22 @@
 import { TRPCError } from "@trpc/server";
+import { Prisma } from "../../../../generated/prisma";
 
-import { createAuctionSchema } from "~/lib/auctions/schema";
+import { createAuctionSchema, placeBidSchema } from "~/lib/auctions/schema";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import {
   getPublicImageUrl,
   getStorageBucket,
   getSupabaseAdminClient,
 } from "~/server/storage/supabase";
+
+const MAX_BID_TRANSACTION_RETRIES = 3;
+
+function isRetryableTransactionError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2034"
+  );
+}
 
 export const auctionRouter = createTRPCRouter({
   listOpen: publicProcedure.query(async ({ ctx }) => {
@@ -105,5 +115,140 @@ export const auctionRouter = createTRPCRouter({
           cause: error,
         });
       }
+    }),
+
+  placeBid: protectedProcedure
+    .input(placeBidSchema)
+    .mutation(async ({ ctx, input }) => {
+      for (let attempt = 1; attempt <= MAX_BID_TRANSACTION_RETRIES; attempt += 1) {
+        try {
+          return await ctx.db.$transaction(
+            async (tx) => {
+              const now = new Date();
+              const auction = await tx.auction.findUnique({
+                where: { id: input.auctionId },
+                select: {
+                  id: true,
+                  sellerId: true,
+                  status: true,
+                  endsAt: true,
+                  currentPriceCents: true,
+                  minIncrementCents: true,
+                  bidCount: true,
+                },
+              });
+
+              if (!auction) {
+                throw new TRPCError({
+                  code: "NOT_FOUND",
+                  message: "Auction not found",
+                });
+              }
+
+              if (auction.sellerId === ctx.session.user.id) {
+                throw new TRPCError({
+                  code: "FORBIDDEN",
+                  message: "You cannot bid on your own auction",
+                });
+              }
+
+              if (auction.status !== "LIVE" || auction.endsAt <= now) {
+                if (auction.status === "LIVE" && auction.endsAt <= now) {
+                  await tx.auction.updateMany({
+                    where: {
+                      id: auction.id,
+                      status: "LIVE",
+                      endsAt: { lte: now },
+                    },
+                    data: { status: "ENDED" },
+                  });
+                }
+
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: "Auction is closed",
+                });
+              }
+
+              const minimumNextBidCents =
+                auction.currentPriceCents + auction.minIncrementCents;
+
+              if (input.amountCents < minimumNextBidCents) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: `Bid must be at least ${minimumNextBidCents} cents`,
+                });
+              }
+
+              const updateResult = await tx.auction.updateMany({
+                where: {
+                  id: auction.id,
+                  status: "LIVE",
+                  endsAt: { gt: now },
+                  currentPriceCents: auction.currentPriceCents,
+                },
+                data: {
+                  currentPriceCents: input.amountCents,
+                  bidCount: { increment: 1 },
+                },
+              });
+
+              if (updateResult.count !== 1) {
+                throw new TRPCError({
+                  code: "CONFLICT",
+                  message: "Auction price changed. Refresh and try again.",
+                });
+              }
+
+              const bid = await tx.bid.create({
+                data: {
+                  auctionId: auction.id,
+                  bidderId: ctx.session.user.id,
+                  amountCents: input.amountCents,
+                },
+                select: {
+                  id: true,
+                  auctionId: true,
+                  bidderId: true,
+                  amountCents: true,
+                  createdAt: true,
+                },
+              });
+
+              return {
+                ...bid,
+                currentPriceCents: input.amountCents,
+                bidCount: auction.bidCount + 1,
+                minimumNextBidCents: input.amountCents + auction.minIncrementCents,
+              };
+            },
+            {
+              isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+            },
+          );
+        } catch (error) {
+          if (error instanceof TRPCError) {
+            throw error;
+          }
+
+          if (
+            isRetryableTransactionError(error) &&
+            attempt < MAX_BID_TRANSACTION_RETRIES
+          ) {
+            continue;
+          }
+
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Could not place bid. Please try again.",
+            cause: error,
+          });
+        }
+      }
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Could not place bid. Please try again.",
+      });
     }),
 });

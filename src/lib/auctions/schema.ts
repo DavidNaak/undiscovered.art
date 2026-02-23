@@ -85,6 +85,13 @@ export const createAuctionSchema = z
 
 export type CreateAuctionInput = z.infer<typeof createAuctionSchema>;
 
+export const placeBidSchema = z.object({
+  auctionId: z.string().trim().cuid("Invalid auction id"),
+  amountCents: z.number().int().min(MIN_BID_CENTS),
+});
+
+export type PlaceBidInput = z.infer<typeof placeBidSchema>;
+
 export function dollarsToCents(rawValue: string): number {
   return Math.round(Number(rawValue) * 100);
 }
