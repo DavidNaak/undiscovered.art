@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 
 import {
@@ -13,7 +13,13 @@ import {
 } from "~/lib/auctions/schema";
 import { api } from "~/trpc/react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,11 +33,35 @@ type AuctionFormValues = {
   imageFile: File | null;
 };
 
+type SubmitPhase =
+  | "idle"
+  | "preparingUpload"
+  | "uploadingImage"
+  | "creatingAuction";
+
 function toFieldError(error: unknown): string | null {
   if (!error) return null;
   if (typeof error === "string") return error;
   if (error instanceof Error) return error.message;
   return "Invalid value";
+}
+
+function getSubmitLabel(phase: SubmitPhase): string {
+  if (phase === "preparingUpload") return "Preparing upload...";
+  if (phase === "uploadingImage") return "Uploading image...";
+  if (phase === "creatingAuction") return "Creating auction...";
+  return "Create Auction";
+}
+
+function validateArtworkFile(value: File | null): string | undefined {
+  if (!value) return "Artwork image is required";
+  if (!isAllowedImageMimeType(value.type)) {
+    return "Only jpeg, png, webp, and gif files are supported";
+  }
+  if (value.size > MAX_UPLOAD_FILE_BYTES) {
+    return "Image is too large. Max size is 5MB";
+  }
+  return undefined;
 }
 
 export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
@@ -44,6 +74,8 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const minEndAt = useMemo(() => {
     const now = new Date();
@@ -78,16 +110,10 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
         return;
       }
 
-      if (!value.imageFile) {
-        setSubmitError("Artwork image is required");
-        return;
-      }
-      if (!isAllowedImageMimeType(value.imageFile.type)) {
-        setSubmitError("Only jpeg, png, webp, and gif files are supported");
-        return;
-      }
-      if (value.imageFile.size > MAX_UPLOAD_FILE_BYTES) {
-        setSubmitError("Image is too large. Max size is 5MB");
+      const imageFile = value.imageFile;
+      const imageValidationError = validateArtworkFile(imageFile);
+      if (imageValidationError || !imageFile) {
+        setSubmitError(imageValidationError ?? "Artwork image is required");
         return;
       }
 
@@ -98,9 +124,9 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
       }
 
       const parsedUploadRequest = createArtworkUploadSchema.safeParse({
-        fileName: value.imageFile.name,
-        fileType: value.imageFile.type,
-        fileSize: value.imageFile.size,
+        fileName: imageFile.name,
+        fileType: imageFile.type,
+        fileSize: imageFile.size,
       });
       if (!parsedUploadRequest.success) {
         setSubmitError(parsedUploadRequest.error.issues[0]?.message ?? "Invalid image");
@@ -108,6 +134,7 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
       }
 
       try {
+        setSubmitPhase("preparingUpload");
         const uploadInitResponse = await fetch("/api/uploads/artwork", {
           method: "POST",
           headers: {
@@ -129,20 +156,22 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
           return;
         }
 
+        setSubmitPhase("uploadingImage");
         const uploadResponse = await fetch(uploadInitJson.signedUrl, {
           method: "PUT",
           headers: {
             "cache-control": "max-age=3600",
-            "content-type": value.imageFile.type,
+            "content-type": imageFile.type,
             "x-upsert": "false",
           },
-          body: value.imageFile,
+          body: imageFile,
         });
         if (!uploadResponse.ok) {
           setSubmitError("Image upload failed. Please try again.");
           return;
         }
 
+        setSubmitPhase("creatingAuction");
         await createAuction.mutateAsync({
           title: parsedForm.data.title,
           description: parsedForm.data.description?.trim() ?? undefined,
@@ -151,17 +180,25 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
           minIncrementCents: dollarsToCents(parsedForm.data.minIncrement),
           endsAt: endsAtDate,
         });
+
         setSubmitSuccess("Auction created.");
         form.reset();
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       } catch (error) {
         setSubmitError(
           error instanceof Error
             ? error.message
             : "Could not create auction. Try again.",
         );
+      } finally {
+        setSubmitPhase("idle");
       }
     },
   });
+
+  const isBusy = submitPhase !== "idle" || createAuction.isPending;
 
   if (!canCreate) {
     return (
@@ -180,7 +217,9 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
     <Card className="h-fit">
       <CardHeader>
         <CardTitle>Create Auction</CardTitle>
-        <CardDescription>Upload one artwork image and launch an auction.</CardDescription>
+        <CardDescription>
+          Upload one artwork image and launch an auction.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form
@@ -207,6 +246,7 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
                 <Input
                   id={field.name}
                   value={field.state.value}
+                  disabled={isBusy}
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.target.value)}
                   placeholder="Evening Glow, 2026"
@@ -227,6 +267,7 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
                 <Textarea
                   id={field.name}
                   value={field.state.value}
+                  disabled={isBusy}
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.target.value)}
                   placeholder="Medium, dimensions, and story behind the piece."
@@ -253,6 +294,7 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
                   <Input
                     id={field.name}
                     value={field.state.value}
+                    disabled={isBusy}
                     onBlur={field.handleBlur}
                     onChange={(event) => field.handleChange(event.target.value)}
                     placeholder="100.00"
@@ -283,6 +325,7 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
                   <Input
                     id={field.name}
                     value={field.state.value}
+                    disabled={isBusy}
                     onBlur={field.handleBlur}
                     onChange={(event) => field.handleChange(event.target.value)}
                     placeholder="10.00"
@@ -316,6 +359,7 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
                   type="datetime-local"
                   value={field.state.value}
                   min={minEndAt}
+                  disabled={isBusy}
                   onBlur={field.handleBlur}
                   onChange={(event) => field.handleChange(event.target.value)}
                 />
@@ -331,39 +375,41 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
           <form.Field
             name="imageFile"
             validators={{
-              onBlur: ({ value }) => {
-                if (!value) return "Artwork image is required";
-                if (!isAllowedImageMimeType(value.type)) {
-                  return "Only jpeg, png, webp, and gif files are supported";
-                }
-                if (value.size > MAX_UPLOAD_FILE_BYTES) {
-                  return "Image is too large. Max size is 5MB";
-                }
-                return undefined;
-              },
+              onChange: ({ value }) => validateArtworkFile(value),
+              onBlur: ({ value }) => validateArtworkFile(value),
             }}
           >
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Artwork Image</Label>
-                <input
-                  id={field.name}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="block w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1 file:text-sm file:font-medium"
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.files?.[0] ?? null)}
-                />
-                {field.state.value ? (
-                  <p className="text-xs text-muted-foreground">{field.state.value.name}</p>
-                ) : null}
-                {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-                  <p className="text-sm text-red-500">
-                    {toFieldError(field.state.meta.errors[0])}
-                  </p>
-                ) : null}
-              </div>
-            )}
+            {(field) => {
+              const imageFieldError = field.state.meta.isTouched
+                ? validateArtworkFile(field.state.value)
+                : undefined;
+
+              return (
+                <div className="space-y-2">
+                  <Label htmlFor={field.name}>Artwork Image</Label>
+                  <input
+                    id={field.name}
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="block w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1 file:text-sm file:font-medium"
+                    disabled={isBusy}
+                    onBlur={field.handleBlur}
+                    onChange={(event) =>
+                      field.handleChange(event.target.files?.[0] ?? null)
+                    }
+                  />
+                  {field.state.value ? (
+                    <p className="text-xs text-muted-foreground">
+                      {field.state.value.name}
+                    </p>
+                  ) : null}
+                  {imageFieldError ? (
+                    <p className="text-sm text-red-500">{imageFieldError}</p>
+                  ) : null}
+                </div>
+              );
+            }}
           </form.Field>
 
           {submitError ? (
@@ -377,20 +423,24 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
             </p>
           ) : null}
 
+          {isBusy ? (
+            <p className="text-sm text-muted-foreground">{getSubmitLabel(submitPhase)}</p>
+          ) : null}
+
           <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-            {([canSubmit, isSubmitting]) => (
+            {([_, isSubmitting]) => (
               <Button
                 type="submit"
                 className="w-full"
                 disabled={
-                  !(canSubmit ?? false) ||
-                  (isSubmitting ?? false) ||
-                  createAuction.isPending
+                  (isSubmitting ?? false) || createAuction.isPending || isBusy
                 }
               >
-                {(isSubmitting ?? false) || createAuction.isPending
-                  ? "Creating..."
-                  : "Create Auction"}
+                {submitPhase !== "idle"
+                  ? getSubmitLabel(submitPhase)
+                  : (isSubmitting ?? false) || createAuction.isPending
+                    ? "Validating..."
+                    : "Create Auction"}
               </Button>
             )}
           </form.Subscribe>
