@@ -47,26 +47,34 @@ export default async function Home() {
                   </form>
                 </>
               ) : (
-                <form>
-                  <button
-                    className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
-                    formAction={async () => {
-                      "use server";
-                      const res = await auth.api.signInSocial({
-                        body: {
-                          provider: "github",
-                          callbackURL: "/",
-                        },
-                      });
-                      if (!res.url) {
-                        throw new Error("No URL returned from signInSocial");
-                      }
-                      redirect(res.url);
-                    }}
+                <>
+                  <form>
+                    <button
+                      className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
+                      formAction={async () => {
+                        "use server";
+                        const res = await auth.api.signInSocial({
+                          body: {
+                            provider: "github",
+                            callbackURL: "/",
+                          },
+                        });
+                        if (!res.url) {
+                          throw new Error("No URL returned from signInSocial");
+                        }
+                        redirect(res.url);
+                      }}
+                    >
+                      Sign in with GitHub
+                    </button>
+                  </form>
+                  <a
+                    href="/auth"
+                    className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium transition hover:bg-zinc-100"
                   >
-                    Sign in with GitHub
-                  </button>
-                </form>
+                    Email/Password (MVP)
+                  </a>
+                </>
               )}
             </div>
           </header>
