@@ -15,32 +15,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-
-  @@index([name])
+enum AuctionStatus {
+  LIVE
+  ENDED
+  CANCELLED
 }
 
 model User {
-  id            String    @id
-  name          String //@db.Text
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String? //@db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  posts         Post[]
+  id             String    @id
+  name           String //@db.Text
+  email          String
+  emailVerified  Boolean   @default(false)
+  image          String? //@db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+  sessions       Session[]
+  accounts       Account[]
+  sellerAuctions Auction[] @relation("SellerAuctions")
+  bids           Bid[]     @relation("UserBids")
 
   @@unique([email])
   @@map("user")
+}
+
+model Auction {
+  id                String        @id @default(cuid())
+  sellerId          String
+  title             String
+  description       String? //@db.Text
+  imagePath         String //@db.Text
+  startPriceCents   Int
+  currentPriceCents Int
+  minIncrementCents Int           @default(100)
+  startsAt          DateTime      @default(now())
+  endsAt            DateTime
+  status            AuctionStatus @default(LIVE)
+  bidCount          Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  seller User  @relation("SellerAuctions", fields: [sellerId], references: [id], onDelete: Restrict)
+  bids   Bid[]
+
+  @@index([status, endsAt])
+  @@index([sellerId, createdAt(sort: Desc)])
+}
+
+model Bid {
+  id          String   @id @default(cuid())
+  auctionId   String
+  bidderId    String
+  amountCents Int
+  createdAt   DateTime @default(now())
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder  User    @relation("UserBids", fields: [bidderId], references: [id], onDelete: Restrict)
+
+  @@index([auctionId, createdAt(sort: Desc)])
+  @@index([bidderId, createdAt(sort: Desc)])
 }
 
 model Session {

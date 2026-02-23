@@ -1,64 +1,55 @@
 import { headers } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { LatestPost } from "~/app/_components/post";
+import { AuctionHouse } from "~/app/_components/auction-house";
 import { auth } from "~/server/better-auth";
 import { getSession } from "~/server/better-auth/server";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
   const session = await getSession();
-
-  if (session) {
-    void api.post.getLatest.prefetch();
-  }
+  void api.auction.listOpen.prefetch();
 
   return (
     <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-          </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
+      <main className="min-h-screen bg-gradient-to-b from-zinc-100 via-zinc-100 to-amber-50/80 p-6 text-zinc-900">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 py-8">
+          <header className="space-y-4">
+            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+              Undiscovered Art Auction House
+            </h1>
+            <p className="max-w-2xl text-sm text-zinc-600 sm:text-base">
+              Launch a timed auction for your artwork and browse active pieces
+              from other creators.
             </p>
-
-            <div className="flex flex-col items-center justify-center gap-4">
-              <p className="text-center text-2xl text-white">
-                {session && <span>Logged in as {session.user?.name}</span>}
-              </p>
-              {!session ? (
+            <div className="flex flex-wrap items-center gap-3">
+              {session ? (
+                <>
+                  <p className="text-sm text-zinc-600">
+                    Signed in as{" "}
+                    <span className="font-medium text-zinc-900">
+                      {session.user?.name || session.user?.email}
+                    </span>
+                  </p>
+                  <form>
+                    <button
+                      className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium transition hover:bg-zinc-100"
+                      formAction={async () => {
+                        "use server";
+                        await auth.api.signOut({
+                          headers: await headers(),
+                        });
+                        redirect("/");
+                      }}
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </>
+              ) : (
                 <form>
                   <button
-                    className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
+                    className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
                     formAction={async () => {
                       "use server";
                       const res = await auth.api.signInSocial({
@@ -73,29 +64,14 @@ export default async function Home() {
                       redirect(res.url);
                     }}
                   >
-                    Sign in with Github
-                  </button>
-                </form>
-              ) : (
-                <form>
-                  <button
-                    className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-                    formAction={async () => {
-                      "use server";
-                      await auth.api.signOut({
-                        headers: await headers(),
-                      });
-                      redirect("/");
-                    }}
-                  >
-                    Sign out
+                    Sign in with GitHub
                   </button>
                 </form>
               )}
             </div>
-          </div>
+          </header>
 
-          {session?.user && <LatestPost />}
+          <AuctionHouse canCreate={Boolean(session)} />
         </div>
       </main>
     </HydrateClient>
