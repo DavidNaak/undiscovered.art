@@ -71,7 +71,10 @@ export default async function Home() {
             </div>
           </header>
 
-          <AuctionHouse canCreate={Boolean(session)} />
+          <AuctionHouse
+            canCreate={Boolean(session)}
+            currentUserId={session?.user?.id ?? null}
+          />
         </div>
       </main>
     </HydrateClient>

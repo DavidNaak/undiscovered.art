@@ -5,7 +5,13 @@ import { api } from "~/trpc/react";
 import { AuctionGrid } from "./auction-grid";
 import { CreateAuctionForm } from "./create-auction-form";
 
-export function AuctionHouse({ canCreate }: { canCreate: boolean }) {
+export function AuctionHouse({
+  canCreate,
+  currentUserId,
+}: {
+  canCreate: boolean;
+  currentUserId: string | null;
+}) {
   const { data: openAuctions = [] } = api.auction.listOpen.useQuery();
 
   return (
@@ -17,7 +23,7 @@ export function AuctionHouse({ canCreate }: { canCreate: boolean }) {
       }
     >
       <CreateAuctionForm canCreate={canCreate} />
-      <AuctionGrid auctions={openAuctions} />
+      <AuctionGrid auctions={openAuctions} currentUserId={currentUserId} />
     </div>
   );
 }

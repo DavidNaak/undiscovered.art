@@ -7,7 +7,13 @@ import { AuctionCard } from "./auction-card";
 
 type OpenAuction = RouterOutputs["auction"]["listOpen"];
 
-export function AuctionGrid({ auctions }: { auctions: OpenAuction }) {
+export function AuctionGrid({
+  auctions,
+  currentUserId,
+}: {
+  auctions: OpenAuction;
+  currentUserId: string | null;
+}) {
   return (
     <div className="space-y-4">
       <div>
@@ -18,7 +24,11 @@ export function AuctionGrid({ auctions }: { auctions: OpenAuction }) {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {auctions.map((auction) => (
-          <AuctionCard key={auction.id} auction={auction} />
+          <AuctionCard
+            key={auction.id}
+            auction={auction}
+            currentUserId={currentUserId}
+          />
         ))}
         {auctions.length === 0 ? (
           <Card className="sm:col-span-2 xl:col-span-3">
