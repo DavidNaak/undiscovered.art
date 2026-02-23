@@ -107,42 +107,42 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
         return;
       }
 
-      const uploadInitResponse = await fetch("/api/uploads/artwork", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(parsedUploadRequest.data),
-      });
-      const uploadInitJson = (await uploadInitResponse.json()) as {
-        imagePath?: string;
-        signedUrl?: string;
-        error?: string;
-      };
-      if (
-        !uploadInitResponse.ok ||
-        !uploadInitJson.imagePath ||
-        !uploadInitJson.signedUrl
-      ) {
-        setSubmitError(uploadInitJson.error ?? "Could not prepare image upload");
-        return;
-      }
-
-      const uploadResponse = await fetch(uploadInitJson.signedUrl, {
-        method: "PUT",
-        headers: {
-          "cache-control": "max-age=3600",
-          "content-type": value.imageFile.type,
-          "x-upsert": "false",
-        },
-        body: value.imageFile,
-      });
-      if (!uploadResponse.ok) {
-        setSubmitError("Image upload failed. Please try again.");
-        return;
-      }
-
       try {
+        const uploadInitResponse = await fetch("/api/uploads/artwork", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(parsedUploadRequest.data),
+        });
+        const uploadInitJson = (await uploadInitResponse.json()) as {
+          imagePath?: string;
+          signedUrl?: string;
+          error?: string;
+        };
+        if (
+          !uploadInitResponse.ok ||
+          !uploadInitJson.imagePath ||
+          !uploadInitJson.signedUrl
+        ) {
+          setSubmitError(uploadInitJson.error ?? "Could not prepare image upload");
+          return;
+        }
+
+        const uploadResponse = await fetch(uploadInitJson.signedUrl, {
+          method: "PUT",
+          headers: {
+            "cache-control": "max-age=3600",
+            "content-type": value.imageFile.type,
+            "x-upsert": "false",
+          },
+          body: value.imageFile,
+        });
+        if (!uploadResponse.ok) {
+          setSubmitError("Image upload failed. Please try again.");
+          return;
+        }
+
         await createAuction.mutateAsync({
           title: parsedForm.data.title,
           description: parsedForm.data.description?.trim() ?? undefined,
