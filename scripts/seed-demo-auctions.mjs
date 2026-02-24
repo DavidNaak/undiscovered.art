@@ -224,7 +224,7 @@ async function main() {
   const bucket = process.env.SUPABASE_STORAGE_BUCKET || DEFAULT_BUCKET;
   const imagesDirectory = path.resolve(
     process.cwd(),
-    "EXAMPLE_UI/public/images",
+    "UI_EXAMPLE/public/images",
   );
 
   const prisma = new PrismaClient();
