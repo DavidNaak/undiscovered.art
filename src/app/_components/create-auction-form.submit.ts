@@ -34,9 +34,14 @@ type CreateAuctionMutationInput = {
   endsAt: Date;
 };
 
+type CreateAuctionMutationResult = {
+  id: string;
+  title: string;
+};
+
 type CreateAuctionMutation = (
   input: CreateAuctionMutationInput,
-) => Promise<unknown>;
+) => Promise<CreateAuctionMutationResult>;
 
 class CreateAuctionSubmissionError extends Error {
   constructor(message: string) {
@@ -123,7 +128,7 @@ export async function submitCreateAuction({
   value: AuctionFormValues;
   setSubmitPhase: (phase: SubmitPhase) => void;
   createAuction: CreateAuctionMutation;
-}): Promise<void> {
+}): Promise<CreateAuctionMutationResult> {
   const parsedForm = createAuctionFormSchema.safeParse({
     title: value.title,
     description: value.description,
@@ -162,7 +167,7 @@ export async function submitCreateAuction({
   await uploadArtworkFile(signedUrl, imageFile);
 
   setSubmitPhase("creatingAuction");
-  await createAuction({
+  return await createAuction({
     title: parsedForm.data.title,
     description: parsedForm.data.description?.trim() ?? undefined,
     category: parsedForm.data.category,

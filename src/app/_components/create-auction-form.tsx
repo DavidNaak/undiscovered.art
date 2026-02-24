@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import {
   AlignLeft,
   CalendarIcon,
+  CheckCircle2,
   DollarSign,
   ImageIcon,
   Info,
@@ -15,6 +17,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { AUCTION_CATEGORY_OPTIONS } from "~/lib/auctions/categories";
 import { AUCTION_CONDITION_OPTIONS, getAuctionConditionLabel } from "~/lib/auctions/conditions";
@@ -50,6 +53,7 @@ import {
 } from "./create-auction-form.types";
 
 export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
+  const router = useRouter();
   const utils = api.useUtils();
   const createAuction = api.auction.create.useMutation({
     onSuccess: async () => {
@@ -59,7 +63,6 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
   const [isDragActive, setIsDragActive] = useState(false);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -87,12 +90,11 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
     defaultValues: DEFAULT_AUCTION_FORM_VALUES,
     onSubmit: async ({ value }) => {
       setSubmitError(null);
-      setSubmitSuccess(null);
 
       try {
         const fallbackImageFile = fileInputRef.current?.files?.[0] ?? null;
 
-        await submitCreateAuction({
+        const createdAuction = await submitCreateAuction({
           value: {
             ...value,
             imageFile: value.imageFile ?? fallbackImageFile,
@@ -101,17 +103,24 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
           createAuction: createAuction.mutateAsync,
         });
 
-        setSubmitSuccess("Auction created.");
         setPreviewFile(null);
         form.reset();
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
 
-        window.setTimeout(() => {
-          setIsDialogOpen(false);
-          setSubmitSuccess(null);
-        }, 550);
+        setIsDialogOpen(false);
+        router.refresh();
+
+        toast.success("Auction created successfully", {
+          description: `"${createdAuction.title}" is now live for bidding.`,
+          duration: 5500,
+          icon: <CheckCircle2 className="size-4" />,
+          action: {
+            label: "View auction",
+            onClick: () => router.push(`/auctions/${createdAuction.id}`),
+          },
+        });
       } catch (error) {
         setSubmitError(
           error instanceof Error
@@ -146,7 +155,6 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
 
         if (!nextOpen) {
           setSubmitError(null);
-          setSubmitSuccess(null);
           setSubmitPhase("idle");
           setIsDragActive(false);
           setPreviewFile(null);
@@ -607,12 +615,6 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
             {submitError ? (
               <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {submitError}
-              </p>
-            ) : null}
-
-            {submitSuccess ? (
-              <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                {submitSuccess}
               </p>
             ) : null}
 

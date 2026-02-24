@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { DM_Sans, Geist_Mono, Playfair_Display } from "next/font/google";
 
 import { AppNavbar } from "@/components/app-navbar";
+import { Toaster } from "@/components/ui/sonner";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
@@ -40,6 +41,7 @@ export default function RootLayout({
           <div className="min-h-screen bg-background text-foreground">
             <AppNavbar />
             {children}
+            <Toaster />
           </div>
         </TRPCReactProvider>
       </body>
