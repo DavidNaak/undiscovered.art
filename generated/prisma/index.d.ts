@@ -2704,6 +2704,7 @@ export namespace Prisma {
     startsAt: Date | null
     endsAt: Date | null
     status: $Enums.AuctionStatus | null
+    settledAt: Date | null
     bidCount: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2721,6 +2722,7 @@ export namespace Prisma {
     startsAt: Date | null
     endsAt: Date | null
     status: $Enums.AuctionStatus | null
+    settledAt: Date | null
     bidCount: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2738,6 +2740,7 @@ export namespace Prisma {
     startsAt: number
     endsAt: number
     status: number
+    settledAt: number
     bidCount: number
     createdAt: number
     updatedAt: number
@@ -2771,6 +2774,7 @@ export namespace Prisma {
     startsAt?: true
     endsAt?: true
     status?: true
+    settledAt?: true
     bidCount?: true
     createdAt?: true
     updatedAt?: true
@@ -2788,6 +2792,7 @@ export namespace Prisma {
     startsAt?: true
     endsAt?: true
     status?: true
+    settledAt?: true
     bidCount?: true
     createdAt?: true
     updatedAt?: true
@@ -2805,6 +2810,7 @@ export namespace Prisma {
     startsAt?: true
     endsAt?: true
     status?: true
+    settledAt?: true
     bidCount?: true
     createdAt?: true
     updatedAt?: true
@@ -2909,6 +2915,7 @@ export namespace Prisma {
     startsAt: Date
     endsAt: Date
     status: $Enums.AuctionStatus
+    settledAt: Date | null
     bidCount: number
     createdAt: Date
     updatedAt: Date
@@ -2945,6 +2952,7 @@ export namespace Prisma {
     startsAt?: boolean
     endsAt?: boolean
     status?: boolean
+    settledAt?: boolean
     bidCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2965,6 +2973,7 @@ export namespace Prisma {
     startsAt?: boolean
     endsAt?: boolean
     status?: boolean
+    settledAt?: boolean
     bidCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2983,6 +2992,7 @@ export namespace Prisma {
     startsAt?: boolean
     endsAt?: boolean
     status?: boolean
+    settledAt?: boolean
     bidCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -3001,12 +3011,13 @@ export namespace Prisma {
     startsAt?: boolean
     endsAt?: boolean
     status?: boolean
+    settledAt?: boolean
     bidCount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type AuctionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sellerId" | "title" | "description" | "imagePath" | "startPriceCents" | "currentPriceCents" | "minIncrementCents" | "startsAt" | "endsAt" | "status" | "bidCount" | "createdAt" | "updatedAt", ExtArgs["result"]["auction"]>
+  export type AuctionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sellerId" | "title" | "description" | "imagePath" | "startPriceCents" | "currentPriceCents" | "minIncrementCents" | "startsAt" | "endsAt" | "status" | "settledAt" | "bidCount" | "createdAt" | "updatedAt", ExtArgs["result"]["auction"]>
   export type AuctionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     seller?: boolean | UserDefaultArgs<ExtArgs>
     bids?: boolean | Auction$bidsArgs<ExtArgs>
@@ -3037,6 +3048,7 @@ export namespace Prisma {
       startsAt: Date
       endsAt: Date
       status: $Enums.AuctionStatus
+      settledAt: Date | null
       bidCount: number
       createdAt: Date
       updatedAt: Date
@@ -3476,6 +3488,7 @@ export namespace Prisma {
     readonly startsAt: FieldRef<"Auction", 'DateTime'>
     readonly endsAt: FieldRef<"Auction", 'DateTime'>
     readonly status: FieldRef<"Auction", 'AuctionStatus'>
+    readonly settledAt: FieldRef<"Auction", 'DateTime'>
     readonly bidCount: FieldRef<"Auction", 'Int'>
     readonly createdAt: FieldRef<"Auction", 'DateTime'>
     readonly updatedAt: FieldRef<"Auction", 'DateTime'>
@@ -8325,6 +8338,7 @@ export namespace Prisma {
     startsAt: 'startsAt',
     endsAt: 'endsAt',
     status: 'status',
+    settledAt: 'settledAt',
     bidCount: 'bidCount',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -8599,6 +8613,7 @@ export namespace Prisma {
     startsAt?: DateTimeFilter<"Auction"> | Date | string
     endsAt?: DateTimeFilter<"Auction"> | Date | string
     status?: EnumAuctionStatusFilter<"Auction"> | $Enums.AuctionStatus
+    settledAt?: DateTimeNullableFilter<"Auction"> | Date | string | null
     bidCount?: IntFilter<"Auction"> | number
     createdAt?: DateTimeFilter<"Auction"> | Date | string
     updatedAt?: DateTimeFilter<"Auction"> | Date | string
@@ -8618,6 +8633,7 @@ export namespace Prisma {
     startsAt?: SortOrder
     endsAt?: SortOrder
     status?: SortOrder
+    settledAt?: SortOrderInput | SortOrder
     bidCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -8640,6 +8656,7 @@ export namespace Prisma {
     startsAt?: DateTimeFilter<"Auction"> | Date | string
     endsAt?: DateTimeFilter<"Auction"> | Date | string
     status?: EnumAuctionStatusFilter<"Auction"> | $Enums.AuctionStatus
+    settledAt?: DateTimeNullableFilter<"Auction"> | Date | string | null
     bidCount?: IntFilter<"Auction"> | number
     createdAt?: DateTimeFilter<"Auction"> | Date | string
     updatedAt?: DateTimeFilter<"Auction"> | Date | string
@@ -8659,6 +8676,7 @@ export namespace Prisma {
     startsAt?: SortOrder
     endsAt?: SortOrder
     status?: SortOrder
+    settledAt?: SortOrderInput | SortOrder
     bidCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -8684,6 +8702,7 @@ export namespace Prisma {
     startsAt?: DateTimeWithAggregatesFilter<"Auction"> | Date | string
     endsAt?: DateTimeWithAggregatesFilter<"Auction"> | Date | string
     status?: EnumAuctionStatusWithAggregatesFilter<"Auction"> | $Enums.AuctionStatus
+    settledAt?: DateTimeNullableWithAggregatesFilter<"Auction"> | Date | string | null
     bidCount?: IntWithAggregatesFilter<"Auction"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Auction"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Auction"> | Date | string
@@ -9082,6 +9101,7 @@ export namespace Prisma {
     startsAt?: Date | string
     endsAt: Date | string
     status?: $Enums.AuctionStatus
+    settledAt?: Date | string | null
     bidCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -9101,6 +9121,7 @@ export namespace Prisma {
     startsAt?: Date | string
     endsAt: Date | string
     status?: $Enums.AuctionStatus
+    settledAt?: Date | string | null
     bidCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -9118,6 +9139,7 @@ export namespace Prisma {
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumAuctionStatusFieldUpdateOperationsInput | $Enums.AuctionStatus
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bidCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9137,6 +9159,7 @@ export namespace Prisma {
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumAuctionStatusFieldUpdateOperationsInput | $Enums.AuctionStatus
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bidCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9155,6 +9178,7 @@ export namespace Prisma {
     startsAt?: Date | string
     endsAt: Date | string
     status?: $Enums.AuctionStatus
+    settledAt?: Date | string | null
     bidCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -9171,6 +9195,7 @@ export namespace Prisma {
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumAuctionStatusFieldUpdateOperationsInput | $Enums.AuctionStatus
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bidCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9188,6 +9213,7 @@ export namespace Prisma {
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumAuctionStatusFieldUpdateOperationsInput | $Enums.AuctionStatus
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bidCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9726,6 +9752,17 @@ export namespace Prisma {
     not?: NestedEnumAuctionStatusFilter<$PrismaModel> | $Enums.AuctionStatus
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
@@ -9743,6 +9780,7 @@ export namespace Prisma {
     startsAt?: SortOrder
     endsAt?: SortOrder
     status?: SortOrder
+    settledAt?: SortOrder
     bidCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -9767,6 +9805,7 @@ export namespace Prisma {
     startsAt?: SortOrder
     endsAt?: SortOrder
     status?: SortOrder
+    settledAt?: SortOrder
     bidCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -9784,6 +9823,7 @@ export namespace Prisma {
     startsAt?: SortOrder
     endsAt?: SortOrder
     status?: SortOrder
+    settledAt?: SortOrder
     bidCount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -9804,6 +9844,20 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumAuctionStatusFilter<$PrismaModel>
     _max?: NestedEnumAuctionStatusFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type AuctionScalarRelationFilter = {
@@ -9876,17 +9930,6 @@ export namespace Prisma {
     userId?: SortOrder
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type AccountCountOrderByAggregateInput = {
     id?: SortOrder
     accountId?: SortOrder
@@ -9933,20 +9976,6 @@ export namespace Prisma {
     password?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type VerificationCountOrderByAggregateInput = {
@@ -10192,6 +10221,10 @@ export namespace Prisma {
     set?: $Enums.AuctionStatus
   }
 
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type UserUpdateOneRequiredWithoutSellerAuctionsNestedInput = {
     create?: XOR<UserCreateWithoutSellerAuctionsInput, UserUncheckedCreateWithoutSellerAuctionsInput>
     connectOrCreate?: UserCreateOrConnectWithoutSellerAuctionsInput
@@ -10274,10 +10307,6 @@ export namespace Prisma {
     create?: XOR<UserCreateWithoutAccountsInput, UserUncheckedCreateWithoutAccountsInput>
     connectOrCreate?: UserCreateOrConnectWithoutAccountsInput
     connect?: UserWhereUniqueInput
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
   }
 
   export type UserUpdateOneRequiredWithoutAccountsNestedInput = {
@@ -10444,16 +10473,6 @@ export namespace Prisma {
     not?: NestedEnumAuctionStatusFilter<$PrismaModel> | $Enums.AuctionStatus
   }
 
-  export type NestedEnumAuctionStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.AuctionStatus | EnumAuctionStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.AuctionStatus[] | ListEnumAuctionStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.AuctionStatus[] | ListEnumAuctionStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumAuctionStatusWithAggregatesFilter<$PrismaModel> | $Enums.AuctionStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumAuctionStatusFilter<$PrismaModel>
-    _max?: NestedEnumAuctionStatusFilter<$PrismaModel>
-  }
-
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -10463,6 +10482,16 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedEnumAuctionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AuctionStatus | EnumAuctionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AuctionStatus[] | ListEnumAuctionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AuctionStatus[] | ListEnumAuctionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAuctionStatusWithAggregatesFilter<$PrismaModel> | $Enums.AuctionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAuctionStatusFilter<$PrismaModel>
+    _max?: NestedEnumAuctionStatusFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -10560,6 +10589,7 @@ export namespace Prisma {
     startsAt?: Date | string
     endsAt: Date | string
     status?: $Enums.AuctionStatus
+    settledAt?: Date | string | null
     bidCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -10577,6 +10607,7 @@ export namespace Prisma {
     startsAt?: Date | string
     endsAt: Date | string
     status?: $Enums.AuctionStatus
+    settledAt?: Date | string | null
     bidCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -10713,6 +10744,7 @@ export namespace Prisma {
     startsAt?: DateTimeFilter<"Auction"> | Date | string
     endsAt?: DateTimeFilter<"Auction"> | Date | string
     status?: EnumAuctionStatusFilter<"Auction"> | $Enums.AuctionStatus
+    settledAt?: DateTimeNullableFilter<"Auction"> | Date | string | null
     bidCount?: IntFilter<"Auction"> | number
     createdAt?: DateTimeFilter<"Auction"> | Date | string
     updatedAt?: DateTimeFilter<"Auction"> | Date | string
@@ -10872,6 +10904,7 @@ export namespace Prisma {
     startsAt?: Date | string
     endsAt: Date | string
     status?: $Enums.AuctionStatus
+    settledAt?: Date | string | null
     bidCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -10890,6 +10923,7 @@ export namespace Prisma {
     startsAt?: Date | string
     endsAt: Date | string
     status?: $Enums.AuctionStatus
+    settledAt?: Date | string | null
     bidCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -10957,6 +10991,7 @@ export namespace Prisma {
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumAuctionStatusFieldUpdateOperationsInput | $Enums.AuctionStatus
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bidCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10975,6 +11010,7 @@ export namespace Prisma {
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumAuctionStatusFieldUpdateOperationsInput | $Enums.AuctionStatus
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bidCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11209,6 +11245,7 @@ export namespace Prisma {
     startsAt?: Date | string
     endsAt: Date | string
     status?: $Enums.AuctionStatus
+    settledAt?: Date | string | null
     bidCount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -11307,6 +11344,7 @@ export namespace Prisma {
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumAuctionStatusFieldUpdateOperationsInput | $Enums.AuctionStatus
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bidCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11324,6 +11362,7 @@ export namespace Prisma {
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumAuctionStatusFieldUpdateOperationsInput | $Enums.AuctionStatus
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bidCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11341,6 +11380,7 @@ export namespace Prisma {
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumAuctionStatusFieldUpdateOperationsInput | $Enums.AuctionStatus
+    settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bidCount?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

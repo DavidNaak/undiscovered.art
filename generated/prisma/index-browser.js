@@ -145,6 +145,7 @@ exports.Prisma.AuctionScalarFieldEnum = {
   startsAt: 'startsAt',
   endsAt: 'endsAt',
   status: 'status',
+  settledAt: 'settledAt',
   bidCount: 'bidCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

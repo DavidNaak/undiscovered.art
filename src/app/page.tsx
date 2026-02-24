@@ -4,10 +4,25 @@ import { redirect } from "next/navigation";
 import { AuctionHouse } from "~/app/_components/auction-house";
 import { auth } from "~/server/better-auth";
 import { getSession } from "~/server/better-auth/server";
+import { db } from "~/server/db";
 import { api, HydrateClient } from "~/trpc/server";
+
+const usdFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
 
 export default async function Home() {
   const session = await getSession();
+  const viewerBalance = session?.user?.id
+    ? await db.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          availableBalanceCents: true,
+          reservedBalanceCents: true,
+        },
+      })
+    : null;
   void api.auction.listOpen.prefetch();
 
   return (
@@ -31,6 +46,19 @@ export default async function Home() {
                       {session.user?.name || session.user?.email}
                     </span>
                   </p>
+                  {viewerBalance ? (
+                    <p className="text-sm text-zinc-600">
+                      Balance:{" "}
+                      <span className="font-medium text-zinc-900">
+                        {usdFormatter.format(viewerBalance.availableBalanceCents / 100)}
+                      </span>{" "}
+                      available,{" "}
+                      <span className="font-medium text-zinc-900">
+                        {usdFormatter.format(viewerBalance.reservedBalanceCents / 100)}
+                      </span>{" "}
+                      reserved
+                    </p>
+                  ) : null}
                   <form>
                     <button
                       className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium transition hover:bg-zinc-100"

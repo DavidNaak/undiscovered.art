@@ -52,6 +52,7 @@ model Auction {
   startsAt          DateTime      @default(now())
   endsAt            DateTime
   status            AuctionStatus @default(LIVE)
+  settledAt         DateTime?
   bidCount          Int           @default(0)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
@@ -60,6 +61,7 @@ model Auction {
   bids   Bid[]
 
   @@index([status, endsAt])
+  @@index([settledAt, endsAt])
   @@index([sellerId, createdAt(sort: Desc)])
 }
 

@@ -89,7 +89,9 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+const STARTING_BALANCE_CENTS = 100000;
 const MAX_BID_TRANSACTION_RETRIES = 3;
+const MAX_SETTLEMENT_TRANSACTION_RETRIES = 3;
 const runTag = `concurrency-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
 
 const db = new PrismaClient();
@@ -106,6 +108,117 @@ function isRetryableTransactionError(error) {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034"
   );
+}
+
+async function settleAuctionInTransaction(tx, auctionId, now) {
+  const auction = await tx.auction.findUnique({
+    where: { id: auctionId },
+    select: {
+      id: true,
+      sellerId: true,
+      status: true,
+      endsAt: true,
+      settledAt: true,
+    },
+  });
+
+  if (!auction || auction.settledAt) {
+    return;
+  }
+
+  if (auction.status === "LIVE") {
+    if (auction.endsAt > now) {
+      return;
+    }
+
+    await tx.auction.updateMany({
+      where: {
+        id: auction.id,
+        status: "LIVE",
+        endsAt: { lte: now },
+      },
+      data: { status: "ENDED" },
+    });
+  } else if (auction.status !== "ENDED") {
+    return;
+  }
+
+  const settlementClaimResult = await tx.auction.updateMany({
+    where: {
+      id: auction.id,
+      status: "ENDED",
+      settledAt: null,
+    },
+    data: {
+      settledAt: now,
+    },
+  });
+
+  if (settlementClaimResult.count !== 1) {
+    return;
+  }
+
+  const winningBid = await tx.bid.findFirst({
+    where: { auctionId: auction.id },
+    orderBy: [{ amountCents: "desc" }, { createdAt: "desc" }],
+    select: {
+      bidderId: true,
+      amountCents: true,
+    },
+  });
+
+  if (!winningBid) {
+    return;
+  }
+
+  const winnerDebitResult = await tx.user.updateMany({
+    where: {
+      id: winningBid.bidderId,
+      reservedBalanceCents: { gte: winningBid.amountCents },
+    },
+    data: {
+      reservedBalanceCents: { decrement: winningBid.amountCents },
+    },
+  });
+
+  if (winnerDebitResult.count !== 1) {
+    throw new BidError("INTERNAL_SERVER_ERROR", "Could not settle winner balance");
+  }
+
+  await tx.user.update({
+    where: { id: auction.sellerId },
+    data: {
+      availableBalanceCents: { increment: winningBid.amountCents },
+    },
+  });
+}
+
+async function settleAuctionById(auctionId, now = new Date()) {
+  for (
+    let attempt = 1;
+    attempt <= MAX_SETTLEMENT_TRANSACTION_RETRIES;
+    attempt += 1
+  ) {
+    try {
+      await db.$transaction(
+        async (tx) => {
+          await settleAuctionInTransaction(tx, auctionId, now);
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        },
+      );
+      return;
+    } catch (error) {
+      if (
+        isRetryableTransactionError(error) &&
+        attempt < MAX_SETTLEMENT_TRANSACTION_RETRIES
+      ) {
+        continue;
+      }
+      throw error;
+    }
+  }
 }
 
 async function placeBidWithTransaction({ auctionId, bidderId, amountCents }) {
@@ -137,17 +250,7 @@ async function placeBidWithTransaction({ auctionId, bidderId, amountCents }) {
           }
 
           if (auction.status !== "LIVE" || auction.endsAt <= now) {
-            if (auction.status === "LIVE" && auction.endsAt <= now) {
-              await tx.auction.updateMany({
-                where: {
-                  id: auction.id,
-                  status: "LIVE",
-                  endsAt: { lte: now },
-                },
-                data: { status: "ENDED" },
-              });
-            }
-
+            await settleAuctionInTransaction(tx, auction.id, now);
             return { kind: "closed" };
           }
 
@@ -159,6 +262,37 @@ async function placeBidWithTransaction({ auctionId, bidderId, amountCents }) {
               "BAD_REQUEST",
               `Bid must be at least ${minimumNextBidCents} cents`,
             );
+          }
+
+          const currentLeadingBid = await tx.bid.findFirst({
+            where: { auctionId: auction.id },
+            orderBy: [{ amountCents: "desc" }, { createdAt: "desc" }],
+            select: {
+              bidderId: true,
+              amountCents: true,
+            },
+          });
+
+          const requiredAdditionalHoldCents =
+            currentLeadingBid?.bidderId === bidderId
+              ? amountCents - currentLeadingBid.amountCents
+              : amountCents;
+
+          if (requiredAdditionalHoldCents > 0) {
+            const reserveResult = await tx.user.updateMany({
+              where: {
+                id: bidderId,
+                availableBalanceCents: { gte: requiredAdditionalHoldCents },
+              },
+              data: {
+                availableBalanceCents: { decrement: requiredAdditionalHoldCents },
+                reservedBalanceCents: { increment: requiredAdditionalHoldCents },
+              },
+            });
+
+            if (reserveResult.count !== 1) {
+              throw new BidError("BAD_REQUEST", "Insufficient available balance");
+            }
           }
 
           const updateResult = await tx.auction.updateMany({
@@ -179,6 +313,26 @@ async function placeBidWithTransaction({ auctionId, bidderId, amountCents }) {
               "CONFLICT",
               "Auction price changed. Refresh and try again.",
             );
+          }
+
+          if (currentLeadingBid && currentLeadingBid.bidderId !== bidderId) {
+            const releaseResult = await tx.user.updateMany({
+              where: {
+                id: currentLeadingBid.bidderId,
+                reservedBalanceCents: { gte: currentLeadingBid.amountCents },
+              },
+              data: {
+                availableBalanceCents: { increment: currentLeadingBid.amountCents },
+                reservedBalanceCents: { decrement: currentLeadingBid.amountCents },
+              },
+            });
+
+            if (releaseResult.count !== 1) {
+              throw new BidError(
+                "INTERNAL_SERVER_ERROR",
+                "Could not release previous leading bid hold",
+              );
+            }
           }
 
           const bid = await tx.bid.create({
@@ -270,12 +424,26 @@ async function createAuction({ sellerId, startPriceCents, minIncrementCents, end
       minIncrementCents: true,
       bidCount: true,
       status: true,
+      settledAt: true,
       endsAt: true,
     },
   });
 
   createdAuctionIds.add(auction.id);
   return auction;
+}
+
+async function getUserBalances(userId) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      availableBalanceCents: true,
+      reservedBalanceCents: true,
+    },
+  });
+
+  assert.ok(user, "User must exist");
+  return user;
 }
 
 async function runTest(name, testFn) {
@@ -451,15 +619,134 @@ async function testExpiredAuctionRejectsBidAndEndsAuction() {
 
   const afterAuction = await db.auction.findUnique({
     where: { id: auction.id },
-    select: { status: true, bidCount: true },
+    select: { status: true, bidCount: true, settledAt: true },
   });
 
   assert.ok(afterAuction, "Auction must exist after expiry test");
   assert.equal(afterAuction.status, "ENDED");
   assert.equal(afterAuction.bidCount, 0);
+  assert.ok(afterAuction.settledAt, "Expired auction should be settled");
 
   const bidCount = await db.bid.count({ where: { auctionId: auction.id } });
   assert.equal(bidCount, 0);
+}
+
+async function testInsufficientBalanceRejected() {
+  const seller = await createUser("seller-low-balance");
+  const bidder = await createUser("bidder-low-balance");
+  const auction = await createAuction({
+    sellerId: seller.id,
+    startPriceCents: 60_000,
+    minIncrementCents: 100,
+    endsAt: new Date(Date.now() + 15 * 60 * 1000),
+  });
+
+  await db.user.update({
+    where: { id: bidder.id },
+    data: {
+      availableBalanceCents: 500,
+      reservedBalanceCents: 0,
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      placeBidWithTransaction({
+        auctionId: auction.id,
+        bidderId: bidder.id,
+        amountCents: 60_100,
+      }),
+    (error) =>
+      error instanceof BidError &&
+      error.code === "BAD_REQUEST" &&
+      error.message === "Insufficient available balance",
+  );
+
+  const bidCount = await db.bid.count({ where: { auctionId: auction.id } });
+  assert.equal(bidCount, 0);
+
+  const afterAuction = await db.auction.findUnique({
+    where: { id: auction.id },
+    select: { currentPriceCents: true, bidCount: true },
+  });
+
+  assert.ok(afterAuction, "Auction must exist");
+  assert.equal(afterAuction.currentPriceCents, 60_000);
+  assert.equal(afterAuction.bidCount, 0);
+}
+
+async function testSettlementTransfersWinnerFundsToSeller() {
+  const seller = await createUser("seller-settlement");
+  const bidderA = await createUser("bidder-settlement-a");
+  const bidderB = await createUser("bidder-settlement-b");
+  const auction = await createAuction({
+    sellerId: seller.id,
+    startPriceCents: 50_000,
+    minIncrementCents: 100,
+    endsAt: new Date(Date.now() + 15 * 60 * 1000),
+  });
+
+  await placeBidWithTransaction({
+    auctionId: auction.id,
+    bidderId: bidderA.id,
+    amountCents: 50_100,
+  });
+
+  let bidderABalances = await getUserBalances(bidderA.id);
+  assert.equal(
+    bidderABalances.availableBalanceCents,
+    STARTING_BALANCE_CENTS - 50_100,
+  );
+  assert.equal(bidderABalances.reservedBalanceCents, 50_100);
+
+  await placeBidWithTransaction({
+    auctionId: auction.id,
+    bidderId: bidderB.id,
+    amountCents: 50_200,
+  });
+
+  bidderABalances = await getUserBalances(bidderA.id);
+  const bidderBBalances = await getUserBalances(bidderB.id);
+
+  assert.equal(bidderABalances.availableBalanceCents, STARTING_BALANCE_CENTS);
+  assert.equal(bidderABalances.reservedBalanceCents, 0);
+  assert.equal(
+    bidderBBalances.availableBalanceCents,
+    STARTING_BALANCE_CENTS - 50_200,
+  );
+  assert.equal(bidderBBalances.reservedBalanceCents, 50_200);
+
+  await db.auction.update({
+    where: { id: auction.id },
+    data: { endsAt: new Date(Date.now() - 1_000) },
+  });
+
+  await settleAuctionById(auction.id, new Date());
+
+  const settledAuction = await db.auction.findUnique({
+    where: { id: auction.id },
+    select: {
+      status: true,
+      settledAt: true,
+      currentPriceCents: true,
+    },
+  });
+  const sellerBalances = await getUserBalances(seller.id);
+  const settledBidderBBalances = await getUserBalances(bidderB.id);
+
+  assert.ok(settledAuction, "Auction must exist after settlement");
+  assert.equal(settledAuction.status, "ENDED");
+  assert.ok(settledAuction.settledAt, "Auction should be marked settled");
+  assert.equal(settledAuction.currentPriceCents, 50_200);
+  assert.equal(
+    sellerBalances.availableBalanceCents,
+    STARTING_BALANCE_CENTS + 50_200,
+  );
+  assert.equal(settledBidderBBalances.reservedBalanceCents, 0);
+  assert.equal(
+    settledBidderBBalances.availableBalanceCents,
+    STARTING_BALANCE_CENTS - 50_200,
+  );
 }
 
 async function main() {
@@ -473,6 +760,11 @@ async function main() {
     await runTest(
       "expired auction rejects bids and transitions to ENDED",
       testExpiredAuctionRejectsBidAndEndsAuction,
+    );
+    await runTest("insufficient bidder balance is rejected", testInsufficientBalanceRejected);
+    await runTest(
+      "settlement transfers winner funds to seller and clears reserves",
+      testSettlementTransfersWinnerFundsToSeller,
     );
 
     const elapsedMs = Date.now() - startedAt;
