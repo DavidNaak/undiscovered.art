@@ -68,11 +68,11 @@ export function AuctionDetailTabs({
     <div className="space-y-4">
       <div className="h-px w-full bg-border" />
 
-      <div className="grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1">
+      <div className="grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
         <button
           type="button"
           className={cn(
-            "rounded-lg px-4 py-2.5 text-base font-medium transition-colors",
+            "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
             activeTab === "details"
               ? "bg-card text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",
@@ -84,7 +84,7 @@ export function AuctionDetailTabs({
         <button
           type="button"
           className={cn(
-            "rounded-lg px-4 py-2.5 text-base font-medium transition-colors",
+            "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
             activeTab === "history"
               ? "bg-card text-foreground shadow-sm ring-2 ring-accent/75"
               : "text-muted-foreground hover:text-foreground",
