@@ -12,7 +12,11 @@ export function AuctionHouse({
   canCreate: boolean;
   currentUserId: string | null;
 }) {
-  const { data: openAuctions = [] } = api.auction.listOpen.useQuery();
+  const { data: openAuctions = [] } = api.auction.listOpen.useQuery(undefined, {
+    refetchInterval: 2_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  });
 
   return (
     <div

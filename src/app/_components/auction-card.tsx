@@ -54,34 +54,12 @@ export function AuctionCard({
   const isSeller = currentUserId === auction.seller.id;
 
   const placeBid = api.auction.placeBid.useMutation({
-    onMutate: async (input) => {
-      setBidError(null);
-      setBidSuccess(null);
-
-      await utils.auction.listOpen.cancel();
-      const previousAuctions = utils.auction.listOpen.getData();
-
-      utils.auction.listOpen.setData(undefined, (currentAuctions) =>
-        currentAuctions?.map((openAuction) =>
-          openAuction.id === auction.id
-            ? { ...openAuction, currentPriceCents: input.amountCents }
-            : openAuction,
-        ),
-      );
-
-      return { previousAuctions };
-    },
-    onError: (error, _input, context) => {
-      if (context?.previousAuctions) {
-        utils.auction.listOpen.setData(undefined, context.previousAuctions);
-      }
+    onError: (error) => {
       setBidError(error.message);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setBidSuccess("Bid placed.");
       setBidAmount("");
-    },
-    onSettled: async () => {
       await utils.auction.listOpen.invalidate();
     },
   });
@@ -162,7 +140,7 @@ export function AuctionCard({
                 disabled={placeBid.isPending}
               />
               <Button type="submit" disabled={placeBid.isPending}>
-                {placeBid.isPending ? "Placing..." : "Place bid"}
+                {placeBid.isPending ? "Confirming..." : "Place bid"}
               </Button>
             </div>
             {bidError ? <p className="text-xs text-red-500">{bidError}</p> : null}

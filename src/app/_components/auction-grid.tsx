@@ -21,6 +21,7 @@ export function AuctionGrid({
         <p className="text-sm text-muted-foreground">
           Freshly listed artwork available for bidding.
         </p>
+        <p className="text-xs text-muted-foreground">Auto-refreshing every 2s.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {auctions.map((auction) => (
