@@ -3,14 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 
-import {
-  MAX_UPLOAD_FILE_BYTES,
-  createArtworkUploadSchema,
-  createAuctionFormSchema,
-  datetimeLocalToDate,
-  dollarsToCents,
-  isAllowedImageMimeType,
-} from "~/lib/auctions/schema";
+import { createAuctionFormSchema } from "~/lib/auctions/schema";
 import { api } from "~/trpc/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,49 +13,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-
-type AuctionFormValues = {
-  title: string;
-  description: string;
-  startPrice: string;
-  minIncrement: string;
-  endsAt: string;
-  imageFile: File | null;
-};
-
-type SubmitPhase =
-  | "idle"
-  | "preparingUpload"
-  | "uploadingImage"
-  | "creatingAuction";
-
-function toFieldError(error: unknown): string | null {
-  if (!error) return null;
-  if (typeof error === "string") return error;
-  if (error instanceof Error) return error.message;
-  return "Invalid value";
-}
-
-function getSubmitLabel(phase: SubmitPhase): string {
-  if (phase === "preparingUpload") return "Preparing upload...";
-  if (phase === "uploadingImage") return "Uploading image...";
-  if (phase === "creatingAuction") return "Creating auction...";
-  return "Create Auction";
-}
-
-function validateArtworkFile(value: File | null): string | undefined {
-  if (!value) return "Artwork image is required";
-  if (!isAllowedImageMimeType(value.type)) {
-    return "Only jpeg, png, webp, and gif files are supported";
-  }
-  if (value.size > MAX_UPLOAD_FILE_BYTES) {
-    return "Image is too large. Max size is 5MB";
-  }
-  return undefined;
-}
+import { submitCreateAuction } from "./create-auction-form.submit";
+import {
+  ArtworkFileFormField,
+  TextInputFormField,
+  TextareaFormField,
+} from "./create-auction-form-fields";
+import {
+  DEFAULT_AUCTION_FORM_VALUES,
+  type SubmitPhase,
+  getSubmitLabel,
+  toFieldError,
+  validateArtworkFile,
+} from "./create-auction-form.types";
 
 export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
   const utils = api.useUtils();
@@ -83,102 +46,17 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
     return now.toISOString().slice(0, 16);
   }, []);
 
-  const defaultValues: AuctionFormValues = {
-    title: "",
-    description: "",
-    startPrice: "100",
-    minIncrement: "10",
-    endsAt: "",
-    imageFile: null,
-  };
-
   const form = useForm({
-    defaultValues,
+    defaultValues: DEFAULT_AUCTION_FORM_VALUES,
     onSubmit: async ({ value }) => {
       setSubmitError(null);
       setSubmitSuccess(null);
 
-      const parsedForm = createAuctionFormSchema.safeParse({
-        title: value.title,
-        description: value.description,
-        startPrice: value.startPrice,
-        minIncrement: value.minIncrement,
-        endsAt: value.endsAt,
-      });
-      if (!parsedForm.success) {
-        setSubmitError(parsedForm.error.issues[0]?.message ?? "Fix form errors");
-        return;
-      }
-
-      const imageFile = value.imageFile;
-      const imageValidationError = validateArtworkFile(imageFile);
-      if (imageValidationError || !imageFile) {
-        setSubmitError(imageValidationError ?? "Artwork image is required");
-        return;
-      }
-
-      const endsAtDate = datetimeLocalToDate(parsedForm.data.endsAt);
-      if (!endsAtDate) {
-        setSubmitError("Invalid end time");
-        return;
-      }
-
-      const parsedUploadRequest = createArtworkUploadSchema.safeParse({
-        fileName: imageFile.name,
-        fileType: imageFile.type,
-        fileSize: imageFile.size,
-      });
-      if (!parsedUploadRequest.success) {
-        setSubmitError(parsedUploadRequest.error.issues[0]?.message ?? "Invalid image");
-        return;
-      }
-
       try {
-        setSubmitPhase("preparingUpload");
-        const uploadInitResponse = await fetch("/api/uploads/artwork", {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify(parsedUploadRequest.data),
-        });
-        const uploadInitJson = (await uploadInitResponse.json()) as {
-          imagePath?: string;
-          signedUrl?: string;
-          error?: string;
-        };
-        if (
-          !uploadInitResponse.ok ||
-          !uploadInitJson.imagePath ||
-          !uploadInitJson.signedUrl
-        ) {
-          setSubmitError(uploadInitJson.error ?? "Could not prepare image upload");
-          return;
-        }
-
-        setSubmitPhase("uploadingImage");
-        const uploadResponse = await fetch(uploadInitJson.signedUrl, {
-          method: "PUT",
-          headers: {
-            "cache-control": "max-age=3600",
-            "content-type": imageFile.type,
-            "x-upsert": "false",
-          },
-          body: imageFile,
-        });
-        if (!uploadResponse.ok) {
-          setSubmitError("Image upload failed. Please try again.");
-          return;
-        }
-
-        setSubmitPhase("creatingAuction");
-        await createAuction.mutateAsync({
-          title: parsedForm.data.title,
-          description: parsedForm.data.description?.trim() ?? undefined,
-          imagePath: uploadInitJson.imagePath,
-          startPriceCents: dollarsToCents(parsedForm.data.startPrice),
-          minIncrementCents: dollarsToCents(parsedForm.data.minIncrement),
-          endsAt: endsAtDate,
+        await submitCreateAuction({
+          value,
+          setSubmitPhase,
+          createAuction: createAuction.mutateAsync,
         });
 
         setSubmitSuccess("Auction created.");
@@ -241,39 +119,24 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
             }}
           >
             {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Title</Label>
-                <Input
-                  id={field.name}
-                  value={field.state.value}
-                  disabled={isBusy}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
-                  placeholder="Evening Glow, 2026"
-                />
-                {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-                  <p className="text-sm text-red-500">
-                    {toFieldError(field.state.meta.errors[0])}
-                  </p>
-                ) : null}
-              </div>
+              <TextInputFormField
+                field={field}
+                label="Title"
+                placeholder="Evening Glow, 2026"
+                disabled={isBusy}
+              />
             )}
           </form.Field>
 
           <form.Field name="description">
             {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Description</Label>
-                <Textarea
-                  id={field.name}
-                  value={field.state.value}
-                  disabled={isBusy}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
-                  placeholder="Medium, dimensions, and story behind the piece."
-                  rows={4}
-                />
-              </div>
+              <TextareaFormField
+                field={field}
+                label="Description"
+                placeholder="Medium, dimensions, and story behind the piece."
+                disabled={isBusy}
+                rows={4}
+              />
             )}
           </form.Field>
 
@@ -289,23 +152,13 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
               }}
             >
               {(field) => (
-                <div className="space-y-2">
-                  <Label htmlFor={field.name}>Start Price (USD)</Label>
-                  <Input
-                    id={field.name}
-                    value={field.state.value}
-                    disabled={isBusy}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    placeholder="100.00"
-                    inputMode="decimal"
-                  />
-                  {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-                    <p className="text-sm text-red-500">
-                      {toFieldError(field.state.meta.errors[0])}
-                    </p>
-                  ) : null}
-                </div>
+                <TextInputFormField
+                  field={field}
+                  label="Start Price (USD)"
+                  placeholder="100.00"
+                  inputMode="decimal"
+                  disabled={isBusy}
+                />
               )}
             </form.Field>
 
@@ -320,23 +173,13 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
               }}
             >
               {(field) => (
-                <div className="space-y-2">
-                  <Label htmlFor={field.name}>Min Increment (USD)</Label>
-                  <Input
-                    id={field.name}
-                    value={field.state.value}
-                    disabled={isBusy}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    placeholder="10.00"
-                    inputMode="decimal"
-                  />
-                  {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-                    <p className="text-sm text-red-500">
-                      {toFieldError(field.state.meta.errors[0])}
-                    </p>
-                  ) : null}
-                </div>
+                <TextInputFormField
+                  field={field}
+                  label="Min Increment (USD)"
+                  placeholder="10.00"
+                  inputMode="decimal"
+                  disabled={isBusy}
+                />
               )}
             </form.Field>
           </div>
@@ -352,23 +195,13 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
             }}
           >
             {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor={field.name}>Auction Ends At</Label>
-                <Input
-                  id={field.name}
-                  type="datetime-local"
-                  value={field.state.value}
-                  min={minEndAt}
-                  disabled={isBusy}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
-                />
-                {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-                  <p className="text-sm text-red-500">
-                    {toFieldError(field.state.meta.errors[0])}
-                  </p>
-                ) : null}
-              </div>
+              <TextInputFormField
+                field={field}
+                label="Auction Ends At"
+                type="datetime-local"
+                min={minEndAt}
+                disabled={isBusy}
+              />
             )}
           </form.Field>
 
@@ -379,37 +212,13 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
               onBlur: ({ value }) => validateArtworkFile(value),
             }}
           >
-            {(field) => {
-              const imageFieldError = field.state.meta.isTouched
-                ? validateArtworkFile(field.state.value)
-                : undefined;
-
-              return (
-                <div className="space-y-2">
-                  <Label htmlFor={field.name}>Artwork Image</Label>
-                  <input
-                    id={field.name}
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    className="block w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1 file:text-sm file:font-medium"
-                    disabled={isBusy}
-                    onBlur={field.handleBlur}
-                    onChange={(event) =>
-                      field.handleChange(event.target.files?.[0] ?? null)
-                    }
-                  />
-                  {field.state.value ? (
-                    <p className="text-xs text-muted-foreground">
-                      {field.state.value.name}
-                    </p>
-                  ) : null}
-                  {imageFieldError ? (
-                    <p className="text-sm text-red-500">{imageFieldError}</p>
-                  ) : null}
-                </div>
-              );
-            }}
+            {(field) => (
+              <ArtworkFileFormField
+                field={field}
+                disabled={isBusy}
+                fileInputRef={fileInputRef}
+              />
+            )}
           </form.Field>
 
           {submitError ? (
