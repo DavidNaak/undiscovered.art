@@ -109,8 +109,10 @@ export function ArtworkFileFormField({
   disabled: boolean;
   fileInputRef: RefObject<HTMLInputElement | null>;
 }) {
+  const selectedFile = field.state.value ?? fileInputRef.current?.files?.[0] ?? null;
+
   const imageFieldError = field.state.meta.isTouched
-    ? validateArtworkFile(field.state.value)
+    ? validateArtworkFile(selectedFile)
     : undefined;
 
   return (
@@ -126,8 +128,8 @@ export function ArtworkFileFormField({
         onBlur={field.handleBlur}
         onChange={(event) => field.handleChange(event.target.files?.[0] ?? null)}
       />
-      {field.state.value ? (
-        <p className="text-xs text-muted-foreground">{field.state.value.name}</p>
+      {selectedFile ? (
+        <p className="text-xs text-muted-foreground">{selectedFile.name}</p>
       ) : null}
       {imageFieldError ? <p className="text-sm text-red-500">{imageFieldError}</p> : null}
     </div>

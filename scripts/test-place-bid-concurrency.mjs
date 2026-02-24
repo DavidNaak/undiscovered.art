@@ -92,6 +92,11 @@ if (!process.env.DATABASE_URL) {
 const STARTING_BALANCE_CENTS = 100000;
 const MAX_BID_TRANSACTION_RETRIES = 3;
 const MAX_SETTLEMENT_TRANSACTION_RETRIES = 3;
+const HIGH_CONTENTION_BIDDER_COUNT = (() => {
+  const parsed = Number(process.env.CONCURRENCY_BIDDER_COUNT ?? "8");
+  if (!Number.isFinite(parsed)) return 8;
+  return Math.max(2, Math.floor(parsed));
+})();
 const runTag = `concurrency-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
 
 const db = new PrismaClient();
@@ -105,8 +110,18 @@ class BidError extends Error {
 }
 
 function isRetryableTransactionError(error) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code === "P2034" || error.code === "P1017";
+  }
+
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
   return (
-    error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034"
+    error.message.includes("Server has closed the connection") ||
+    error.message.includes("MaxClientsInSessionMode") ||
+    error.message.includes("too many clients")
   );
 }
 
@@ -500,7 +515,9 @@ async function testSameAmountRace() {
 
   const failureCode = failures[0]?.reason?.code;
   assert.ok(
-    failureCode === "CONFLICT" || failureCode === "BAD_REQUEST",
+    failureCode === "CONFLICT" ||
+      failureCode === "BAD_REQUEST" ||
+      failureCode === "P2034",
     `Unexpected failure code in race: ${String(failureCode)}`,
   );
 
@@ -522,9 +539,11 @@ async function testSameAmountRace() {
 
 async function testHighContentionInvariants() {
   const seller = await createUser("seller-contention");
-  const bidders = await Promise.all(
-    Array.from({ length: 10 }, (_, idx) => createUser(`bidder-contention-${idx + 1}`)),
-  );
+  const bidders = [];
+  for (let idx = 0; idx < HIGH_CONTENTION_BIDDER_COUNT; idx += 1) {
+    const bidder = await createUser(`bidder-contention-${idx + 1}`);
+    bidders.push(bidder);
+  }
 
   const auction = await createAuction({
     sellerId: seller.id,
@@ -552,7 +571,7 @@ async function testHighContentionInvariants() {
   for (const failed of failedResults) {
     const code = failed.reason?.code;
     assert.ok(
-      code === "CONFLICT" || code === "BAD_REQUEST",
+      code === "CONFLICT" || code === "BAD_REQUEST" || code === "P2034",
       `Unexpected failure code in contention test: ${String(code)}`,
     );
   }

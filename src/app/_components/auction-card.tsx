@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 import { type RouterOutputs, api } from "~/trpc/react";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ export function AuctionCard({
   auction: OpenAuction;
   currentUserId: string | null;
 }) {
+  const router = useRouter();
   const utils = api.useUtils();
   const [bidAmount, setBidAmount] = useState("");
   const [bidError, setBidError] = useState<string | null>(null);
@@ -61,6 +63,7 @@ export function AuctionCard({
       setBidSuccess("Bid placed.");
       setBidAmount("");
       await utils.auction.listOpen.invalidate();
+      router.refresh();
     },
   });
 

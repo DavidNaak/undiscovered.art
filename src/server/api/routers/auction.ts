@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 import { createAuctionSchema, placeBidSchema } from "~/lib/auctions/schema";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
@@ -11,42 +12,59 @@ import {
 } from "~/server/storage/supabase";
 
 export const auctionRouter = createTRPCRouter({
-  listOpen: publicProcedure.query(async ({ ctx }) => {
-    const now = new Date();
-    await settleExpiredAuctions(ctx.db, now);
+  listOpen: publicProcedure
+    .input(
+      z
+        .object({
+          query: z.string().trim().max(80).optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const searchQuery = input?.query?.trim();
+      const now = new Date();
+      await settleExpiredAuctions(ctx.db, now);
 
-    const auctions = await ctx.db.auction.findMany({
-      where: {
-        status: "LIVE",
-        endsAt: { gt: now },
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        imagePath: true,
-        startPriceCents: true,
-        currentPriceCents: true,
-        minIncrementCents: true,
-        endsAt: true,
-        createdAt: true,
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
+      const auctions = await ctx.db.auction.findMany({
+        where: {
+          status: "LIVE",
+          endsAt: { gt: now },
+          ...(searchQuery
+            ? {
+                OR: [
+                  { title: { contains: searchQuery, mode: "insensitive" } },
+                  { description: { contains: searchQuery, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          imagePath: true,
+          startPriceCents: true,
+          currentPriceCents: true,
+          minIncrementCents: true,
+          endsAt: true,
+          createdAt: true,
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
           },
         },
-      },
-      take: 24,
-    });
+        take: 24,
+      });
 
-    return auctions.map((auction) => ({
-      ...auction,
-      imageUrl: getPublicImageUrl(auction.imagePath),
-    }));
-  }),
+      return auctions.map((auction) => ({
+        ...auction,
+        imageUrl: getPublicImageUrl(auction.imagePath),
+      }));
+    }),
 
   create: protectedProcedure
     .input(createAuctionSchema)

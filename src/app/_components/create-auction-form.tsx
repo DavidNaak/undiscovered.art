@@ -53,8 +53,13 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
       setSubmitSuccess(null);
 
       try {
+        const fallbackImageFile = fileInputRef.current?.files?.[0] ?? null;
+
         await submitCreateAuction({
-          value,
+          value: {
+            ...value,
+            imageFile: value.imageFile ?? fallbackImageFile,
+          },
           setSubmitPhase,
           createAuction: createAuction.mutateAsync,
         });
