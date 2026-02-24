@@ -21,6 +21,8 @@ const moneyStringSchema = z
   .trim()
   .regex(/^\d+(\.\d{1,2})?$/, "Use a valid amount (e.g. 120 or 120.50)");
 
+const dimensionsInchesPattern = /^\d+(\.\d+)?\s*x\s*\d+(\.\d+)?\s*in$/i;
+
 export const auctionCategorySchema = z.enum(AUCTION_CATEGORY_VALUES);
 export type AuctionCategory = z.infer<typeof auctionCategorySchema>;
 export const auctionConditionSchema = z.enum(AUCTION_CONDITION_VALUES);
@@ -53,11 +55,12 @@ export const createAuctionFormSchema = z.object({
   dimensions: z
     .string()
     .trim()
-    .min(2, "Dimensions must be at least 2 characters")
+    .min(1, "Enter width and height in inches")
     .max(
       MAX_DIMENSIONS_LENGTH,
       `Dimensions must be ${MAX_DIMENSIONS_LENGTH} characters or less`,
-    ),
+    )
+    .regex(dimensionsInchesPattern, "Use format like 48 x 36 in"),
   condition: auctionConditionSchema,
   artworkYear: z
     .string()
@@ -109,7 +112,12 @@ export const createAuctionSchema = z
       .max(MAX_DESCRIPTION_LENGTH)
       .optional(),
     category: auctionCategorySchema,
-    dimensions: z.string().trim().min(2).max(MAX_DIMENSIONS_LENGTH),
+    dimensions: z
+      .string()
+      .trim()
+      .min(1)
+      .max(MAX_DIMENSIONS_LENGTH)
+      .regex(dimensionsInchesPattern, "Use format like 48 x 36 in"),
     condition: auctionConditionSchema,
     artworkYear: z.number().int().min(1000).max(new Date().getFullYear() + 1),
     imagePath: z.string().trim().min(1).max(512),

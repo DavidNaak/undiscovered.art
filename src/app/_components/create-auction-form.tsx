@@ -52,6 +52,25 @@ import {
   validateArtworkFile,
 } from "./create-auction-form.types";
 
+function sanitizeDimensionPart(value: string): string {
+  const cleaned = value.replace(/[^\d.]/g, "");
+  if (!cleaned.includes(".")) {
+    return cleaned.slice(0, 4);
+  }
+
+  const [rawWhole, ...rawFractionParts] = cleaned.split(".");
+  const whole = (rawWhole ?? "").slice(0, 4);
+  const fraction = rawFractionParts.join("").slice(0, 2);
+  return fraction.length > 0 ? `${whole}.${fraction}` : whole;
+}
+
+function buildDimensionsValue(widthInches: string, heightInches: string): string {
+  const width = widthInches.trim();
+  const height = heightInches.trim();
+  if (!width || !height) return "";
+  return `${width} x ${height} in`;
+}
+
 export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
   const router = useRouter();
   const utils = api.useUtils();
@@ -66,6 +85,8 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
   const [isDragActive, setIsDragActive] = useState(false);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [dimensionWidthInches, setDimensionWidthInches] = useState("");
+  const [dimensionHeightInches, setDimensionHeightInches] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -97,6 +118,10 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
         const createdAuction = await submitCreateAuction({
           value: {
             ...value,
+            dimensions: buildDimensionsValue(
+              dimensionWidthInches,
+              dimensionHeightInches,
+            ),
             imageFile: value.imageFile ?? fallbackImageFile,
           },
           setSubmitPhase,
@@ -104,6 +129,8 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
         });
 
         setPreviewFile(null);
+        setDimensionWidthInches("");
+        setDimensionHeightInches("");
         form.reset();
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
@@ -158,6 +185,8 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
           setSubmitPhase("idle");
           setIsDragActive(false);
           setPreviewFile(null);
+          setDimensionWidthInches("");
+          setDimensionHeightInches("");
           form.reset();
           if (fileInputRef.current) {
             fileInputRef.current.value = "";
@@ -384,19 +413,47 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
               >
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor={field.name} className="flex items-center gap-2">
+                    <Label className="flex items-center gap-2">
                       <Ruler className="text-muted-foreground size-4" />
                       Dimensions
                     </Label>
-                    <Input
-                      id={field.name}
-                      value={field.state.value}
-                      disabled={isBusy}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      placeholder="48 x 36 in"
-                      className="h-11 rounded-xl"
-                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        id={`${field.name}-width`}
+                        value={dimensionWidthInches}
+                        disabled={isBusy}
+                        inputMode="decimal"
+                        onBlur={field.handleBlur}
+                        onChange={(event) => {
+                          const nextWidth = sanitizeDimensionPart(event.target.value);
+                          setDimensionWidthInches(nextWidth);
+                          field.handleChange(
+                            buildDimensionsValue(nextWidth, dimensionHeightInches),
+                          );
+                        }}
+                        placeholder="Width (in)"
+                        aria-label="Artwork width in inches"
+                        className="h-11 rounded-xl"
+                      />
+
+                      <Input
+                        id={`${field.name}-height`}
+                        value={dimensionHeightInches}
+                        disabled={isBusy}
+                        inputMode="decimal"
+                        onBlur={field.handleBlur}
+                        onChange={(event) => {
+                          const nextHeight = sanitizeDimensionPart(event.target.value);
+                          setDimensionHeightInches(nextHeight);
+                          field.handleChange(
+                            buildDimensionsValue(dimensionWidthInches, nextHeight),
+                          );
+                        }}
+                        placeholder="Height (in)"
+                        aria-label="Artwork height in inches"
+                        className="h-11 rounded-xl"
+                      />
+                    </div>
                     {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
                       <p className="text-sm text-red-500">
                         {toFieldError(field.state.meta.errors[0])}
