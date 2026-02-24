@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Filter, Gavel, Trophy, TrendingDown, TrendingUp } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +89,7 @@ export function MyBidsView({
 }: {
   bids: MyBidItem[];
 }) {
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<"ALL" | BidStatus>("ALL");
 
   const counts = useMemo(() => {
@@ -113,6 +115,22 @@ export function MyBidsView({
         .reduce((sum, bid) => sum + bid.yourBidCents, 0),
     [bids],
   );
+
+  const hasActiveAuctions = useMemo(
+    () => bids.some((bid) => bid.status === "LEADING" || bid.status === "OUTBID"),
+    [bids],
+  );
+
+  useEffect(() => {
+    if (!hasActiveAuctions) return;
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      router.refresh();
+    }, 5_000);
+
+    return () => window.clearInterval(intervalId);
+  }, [hasActiveAuctions, router]);
 
   return (
     <div className="space-y-8">

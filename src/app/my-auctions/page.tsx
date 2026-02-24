@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { getAuctionCategoryLabel } from "~/lib/auctions/categories";
@@ -6,14 +5,8 @@ import { getSession } from "~/server/better-auth/server";
 import { db } from "~/server/db";
 import { getPublicImageUrl } from "~/server/storage/supabase";
 import { SitePageShell } from "@/components/site-page-shell";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreateAuctionForm } from "../_components/create-auction-form";
-
-const usdFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
+import { MyAuctionsView } from "./_components/my-auctions-view";
 
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -29,16 +22,6 @@ function resolveDisplayStatus(status: AuctionStatus, endsAt: Date, now: Date): A
     return "ENDED";
   }
   return status;
-}
-
-function statusBadgeClass(status: AuctionStatus): string {
-  if (status === "LIVE") {
-    return "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
-  }
-  if (status === "ENDED") {
-    return "bg-zinc-900 text-white hover:bg-zinc-900";
-  }
-  return "bg-red-100 text-red-700 hover:bg-red-100";
 }
 
 export default async function MyAuctionsPage() {
@@ -89,83 +72,24 @@ export default async function MyAuctionsPage() {
 
   return (
     <SitePageShell currentPath="/my-auctions">
-      <section className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-semibold tracking-tight">My Auctions</h1>
-          <p className="text-sm text-zinc-600">
-            Your listings, current prices, and auction status.
-          </p>
-        </div>
-        <CreateAuctionForm canCreate />
-      </section>
+      <MyAuctionsView
+        auctions={auctions.map((auction) => {
+          const displayStatus = resolveDisplayStatus(auction.status, auction.endsAt, now);
 
-      {auctions.length === 0 ? (
-        <Card>
-          <CardContent className="py-8">
-            <p className="text-sm text-zinc-600">
-              You have not listed any auctions yet. Create one from the Home page.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {auctions.map((auction) => {
-            const imageUrl = getPublicImageUrl(auction.imagePath);
-            const displayStatus = resolveDisplayStatus(auction.status, auction.endsAt, now);
-
-            return (
-              <Card key={auction.id} className="overflow-hidden">
-                <div className="flex">
-                  <div className="relative h-28 w-28 shrink-0 bg-zinc-100">
-                    {imageUrl ? (
-                      <Image
-                        src={imageUrl}
-                        alt={auction.title}
-                        fill
-                        className="object-cover"
-                        sizes="112px"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-[11px] text-zinc-500">
-                        No image
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex min-w-0 flex-1 flex-col justify-between p-4">
-                    <div>
-                      <p className="truncate text-sm font-semibold">{auction.title}</p>
-                      <p className="line-clamp-1 text-xs text-zinc-500">
-                        {auction.description ?? "No description"}
-                      </p>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Badge className={statusBadgeClass(displayStatus)}>
-                        {displayStatus}
-                      </Badge>
-                      <Badge variant="outline">
-                        {getAuctionCategoryLabel(auction.category)}
-                      </Badge>
-                      <span className="text-xs text-zinc-500">
-                        {auction.bidCount} {auction.bidCount === 1 ? "bid" : "bids"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <CardContent className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200/80 pt-3 text-xs text-zinc-500">
-                  <span>
-                    Start {usdFormatter.format(auction.startPriceCents / 100)} /
-                    Current {usdFormatter.format(auction.currentPriceCents / 100)}
-                  </span>
-                  <span>Ends {formatDate(auction.endsAt)}</span>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+          return {
+            id: auction.id,
+            title: auction.title,
+            description: auction.description,
+            categoryLabel: getAuctionCategoryLabel(auction.category),
+            imageUrl: getPublicImageUrl(auction.imagePath),
+            status: displayStatus,
+            startPriceCents: auction.startPriceCents,
+            currentPriceCents: auction.currentPriceCents,
+            bidCount: auction.bidCount,
+            endsAtLabel: formatDate(auction.endsAt),
+          };
+        })}
+      />
     </SitePageShell>
   );
 }
