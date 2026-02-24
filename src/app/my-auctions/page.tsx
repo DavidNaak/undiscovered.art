@@ -8,6 +8,7 @@ import { getPublicImageUrl } from "~/server/storage/supabase";
 import { SitePageShell } from "@/components/site-page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateAuctionForm } from "../_components/create-auction-form";
 
 const usdFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -21,14 +22,28 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
-function statusBadgeVariant(status: "LIVE" | "ENDED" | "CANCELLED") {
-  if (status === "LIVE") return "secondary" as const;
-  if (status === "ENDED") return "default" as const;
-  return "destructive" as const;
+type AuctionStatus = "LIVE" | "ENDED" | "CANCELLED";
+
+function resolveDisplayStatus(status: AuctionStatus, endsAt: Date, now: Date): AuctionStatus {
+  if (status === "LIVE" && endsAt <= now) {
+    return "ENDED";
+  }
+  return status;
+}
+
+function statusBadgeClass(status: AuctionStatus): string {
+  if (status === "LIVE") {
+    return "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
+  }
+  if (status === "ENDED") {
+    return "bg-zinc-900 text-white hover:bg-zinc-900";
+  }
+  return "bg-red-100 text-red-700 hover:bg-red-100";
 }
 
 export default async function MyAuctionsPage() {
   const session = await getSession();
+  const now = new Date();
 
   if (!session?.user?.id) {
     return (
@@ -74,11 +89,14 @@ export default async function MyAuctionsPage() {
 
   return (
     <SitePageShell currentPath="/my-auctions">
-      <section className="mb-6 space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight">My Auctions</h1>
-        <p className="text-sm text-zinc-600">
-          Your listings, current prices, and auction status.
-        </p>
+      <section className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold tracking-tight">My Auctions</h1>
+          <p className="text-sm text-zinc-600">
+            Your listings, current prices, and auction status.
+          </p>
+        </div>
+        <CreateAuctionForm canCreate />
       </section>
 
       {auctions.length === 0 ? (
@@ -93,6 +111,7 @@ export default async function MyAuctionsPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {auctions.map((auction) => {
             const imageUrl = getPublicImageUrl(auction.imagePath);
+            const displayStatus = resolveDisplayStatus(auction.status, auction.endsAt, now);
 
             return (
               <Card key={auction.id} className="overflow-hidden">
@@ -122,8 +141,8 @@ export default async function MyAuctionsPage() {
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Badge variant={statusBadgeVariant(auction.status)}>
-                        {auction.status}
+                      <Badge className={statusBadgeClass(displayStatus)}>
+                        {displayStatus}
                       </Badge>
                       <Badge variant="outline">
                         {getAuctionCategoryLabel(auction.category)}

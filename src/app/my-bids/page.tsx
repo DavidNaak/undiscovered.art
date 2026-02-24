@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAuctionCategoryLabel } from "~/lib/auctions/categories";
 import { getSession } from "~/server/better-auth/server";
 import { db } from "~/server/db";
-import { settleExpiredAuctions } from "~/server/services/auction/settlement";
 import { getPublicImageUrl } from "~/server/storage/supabase";
 
 import { MyBidsView } from "./_components/my-bids-view";
@@ -16,14 +15,21 @@ type BidStatus = "LEADING" | "OUTBID" | "WON" | "LOST" | "CANCELLED";
 function computeBidStatus({
   auctionStatus,
   isCurrentLeader,
+  endsAt,
+  now,
 }: {
   auctionStatus: "LIVE" | "ENDED" | "CANCELLED";
   isCurrentLeader: boolean;
+  endsAt: Date;
+  now: Date;
 }): BidStatus {
-  if (auctionStatus === "LIVE") {
+  const effectiveStatus =
+    auctionStatus === "LIVE" && endsAt <= now ? "ENDED" : auctionStatus;
+
+  if (effectiveStatus === "LIVE") {
     return isCurrentLeader ? "LEADING" : "OUTBID";
   }
-  if (auctionStatus === "ENDED") {
+  if (effectiveStatus === "ENDED") {
     return isCurrentLeader ? "WON" : "LOST";
   }
   return "CANCELLED";
@@ -52,7 +58,7 @@ export default async function MyBidsPage() {
     );
   }
 
-  await settleExpiredAuctions(db, new Date());
+  const now = new Date();
 
   const rawBids = await db.bid.findMany({
     where: { bidderId: session.user.id },
@@ -122,6 +128,8 @@ export default async function MyBidsPage() {
       const status = computeBidStatus({
         auctionStatus: entry.auction.status,
         isCurrentLeader,
+        endsAt: entry.auction.endsAt,
+        now,
       });
 
       return {
