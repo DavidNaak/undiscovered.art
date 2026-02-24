@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HandCoins, Menu, Wallet } from "lucide-react";
+import { BriefcaseBusiness, HandCoins, Menu } from "lucide-react";
 
 import { getSession } from "~/server/better-auth/server";
 import { db } from "~/server/db";
@@ -27,6 +27,7 @@ const GITHUB_SIGN_IN_HREF =
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/my-bids", label: "My Bids" },
+  { href: "/my-auctions", label: "My Auctions" },
   { href: "/about", label: "About" },
 ] as const;
 
@@ -43,17 +44,17 @@ function WalletSummary({
   inBidsCents: number;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-950 px-3 py-2 text-zinc-100">
+    <div className="flex items-center gap-3 rounded-full border border-zinc-300/90 bg-white px-3.5 py-2 text-zinc-900 shadow-sm">
       <div className="flex items-center gap-2" title="Available balance">
-        <Wallet className="size-4 text-indigo-300" />
-        <span className="text-sm font-medium">
+        <BriefcaseBusiness className="size-4 text-zinc-600" />
+        <span className="text-sm font-semibold tracking-tight">
           {usdFormatter.format(availableCents / 100)}
         </span>
       </div>
-      <div className="h-6 w-px bg-zinc-700" />
-      <div className="flex items-center gap-2" title="Currently in bids">
-        <HandCoins className="size-4 text-emerald-300" />
-        <span className="text-sm font-medium">
+      <div className="h-5 w-px bg-zinc-300" />
+      <div className="flex items-center gap-2" title="Currently reserved in bids">
+        <HandCoins className="size-4 text-emerald-600" />
+        <span className="text-sm font-semibold tracking-tight">
           {usdFormatter.format(inBidsCents / 100)}
         </span>
       </div>
@@ -89,41 +90,42 @@ export async function AppNavbar({
     : null;
 
   return (
-    <header className="border-border/80 bg-background/80 sticky top-0 z-40 border-b backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="font-serif shrink-0 text-lg leading-none font-semibold tracking-tight">
-          Undiscovered Art
-        </Link>
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-md">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:h-[68px] lg:px-8">
+        <div className="flex items-center gap-8">
+          <Link
+            href="/"
+            className="font-serif shrink-0 text-[30px] leading-none font-semibold tracking-tight"
+          >
+            Undiscovered Art
+          </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium transition",
-                isActivePath(currentPath, link.href)
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+          <nav className="hidden items-center gap-1 md:flex">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                  isActivePath(currentPath, link.href)
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        <div className="hidden min-w-0 flex-1 lg:block" />
-
-        {walletSummary ? (
-          <div className="hidden xl:block">
+        <div className="ml-auto hidden items-center gap-3 md:flex">
+          {walletSummary ? (
             <WalletSummary
               availableCents={walletSummary.availableCents}
               inBidsCents={walletSummary.inBidsCents}
             />
-          </div>
-        ) : null}
+          ) : null}
 
-        <div className="ml-auto hidden items-center gap-2 md:flex">
           {session ? (
             <UserMenu
               displayName={session.user.name || "Account"}
@@ -131,10 +133,17 @@ export async function AppNavbar({
             />
           ) : (
             <>
-              <Button variant="outline" className="rounded-full" render={<Link href="/login" />}>
+              <Button
+                variant="outline"
+                className="h-10 rounded-full px-4"
+                render={<Link href="/login" />}
+              >
                 Sign In
               </Button>
-              <Button className="rounded-full bg-foreground text-background hover:bg-foreground/90" render={<a href={GITHUB_SIGN_IN_HREF} />}>
+              <Button
+                className="h-10 rounded-full bg-foreground px-4 text-background hover:bg-foreground/90"
+                render={<a href={GITHUB_SIGN_IN_HREF} />}
+              >
                 GitHub
               </Button>
             </>
@@ -191,7 +200,10 @@ export async function AppNavbar({
                     <Button variant="outline" render={<Link href="/login" />}>
                       Sign In
                     </Button>
-                    <Button className="bg-foreground text-background hover:bg-foreground/90" render={<a href={GITHUB_SIGN_IN_HREF} />}>
+                    <Button
+                      className="bg-foreground text-background hover:bg-foreground/90"
+                      render={<a href={GITHUB_SIGN_IN_HREF} />}
+                    >
                       GitHub
                     </Button>
                   </>

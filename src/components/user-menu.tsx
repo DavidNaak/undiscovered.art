@@ -47,7 +47,12 @@ export function UserMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="outline" className="h-9 gap-2 px-3" />}
+        render={
+          <Button
+            variant="outline"
+            className="h-10 gap-2 rounded-full border-border bg-card px-3.5 hover:bg-secondary"
+          />
+        }
       >
         <UserRound className="size-4" />
         <span className="hidden sm:inline">{displayName}</span>
@@ -61,6 +66,9 @@ export function UserMenu({
         <DropdownMenuGroup>
           <DropdownMenuItem render={<Link href="/" />}>Home</DropdownMenuItem>
           <DropdownMenuItem render={<Link href="/my-bids" />}>My Bids</DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/my-auctions" />}>
+            My Auctions
+          </DropdownMenuItem>
           <DropdownMenuItem render={<Link href="/about" />}>About</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

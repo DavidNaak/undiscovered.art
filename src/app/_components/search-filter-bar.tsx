@@ -38,7 +38,7 @@ export function SearchFilterBar({
   onCategoryChange: (category: "ALL" | AuctionCategoryValue) => void;
   sortBy: AuctionSortBy;
   onSortChange: (sort: AuctionSortBy) => void;
-  resultCount: number;
+  resultCount: number | null;
   categories: CategoryOption[];
 }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -148,9 +148,13 @@ export function SearchFilterBar({
         </div>
       </div>
 
-      <p className="text-muted-foreground text-sm">
-        {resultCount} {resultCount === 1 ? "auction" : "auctions"} found
-      </p>
+      {resultCount === null ? (
+        <p className="text-muted-foreground text-sm">Loading auctions...</p>
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          {resultCount} {resultCount === 1 ? "auction" : "auctions"} found
+        </p>
+      )}
     </section>
   );
 }

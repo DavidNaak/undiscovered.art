@@ -47,6 +47,10 @@ export function AuctionHouse({
     },
   );
   const openAuctions: RouterOutputs["auction"]["listOpen"] = auctionListQuery.data ?? [];
+  const isInitialLoading =
+    auctionListQuery.isLoading ||
+    (auctionListQuery.isFetching && auctionListQuery.data === undefined);
+  const resultCount = auctionListQuery.data ? auctionListQuery.data.length : null;
 
   return (
     <div className="space-y-10">
@@ -73,12 +77,13 @@ export function AuctionHouse({
         onCategoryChange={setActiveCategory}
         sortBy={sortBy}
         onSortChange={setSortBy}
-        resultCount={openAuctions.length}
+        resultCount={resultCount}
         categories={AUCTION_CATEGORY_OPTIONS}
       />
 
       <AuctionGrid
         auctions={openAuctions}
+        isLoading={isInitialLoading}
         currentUserId={currentUserId}
         activeCategory={activeCategory}
         debouncedSearch={debouncedSearch}

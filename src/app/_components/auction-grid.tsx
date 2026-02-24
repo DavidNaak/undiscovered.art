@@ -4,20 +4,27 @@ import { type RouterOutputs } from "~/trpc/react";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { AuctionCard } from "./auction-card";
+import { AuctionCardSkeleton } from "./auction-card-skeleton";
 
 type OpenAuction = RouterOutputs["auction"]["listOpen"];
 
 export function AuctionGrid({
   auctions,
+  isLoading,
   currentUserId,
   activeCategory,
   debouncedSearch,
 }: {
   auctions: OpenAuction;
+  isLoading: boolean;
   currentUserId: string | null;
   activeCategory: string;
   debouncedSearch: string;
 }) {
+  const skeletonCards = Array.from({ length: 6 }, (_, index) => (
+    <AuctionCardSkeleton key={`auction-card-skeleton-${index}`} />
+  ));
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -25,14 +32,16 @@ export function AuctionGrid({
         <p className="text-muted-foreground text-xs">Auto-refreshing every 2s</p>
       </div>
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {auctions.map((auction) => (
-          <AuctionCard
-            key={auction.id}
-            auction={auction}
-            currentUserId={currentUserId}
-          />
-        ))}
-        {auctions.length === 0 ? (
+        {isLoading
+          ? skeletonCards
+          : auctions.map((auction) => (
+              <AuctionCard
+                key={auction.id}
+                auction={auction}
+                currentUserId={currentUserId}
+              />
+            ))}
+        {!isLoading && auctions.length === 0 ? (
           <Card className="sm:col-span-2 xl:col-span-3">
             <CardContent className="py-10 text-center">
               <p className="text-sm text-muted-foreground">
