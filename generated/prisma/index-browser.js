@@ -138,6 +138,7 @@ exports.Prisma.AuctionScalarFieldEnum = {
   sellerId: 'sellerId',
   title: 'title',
   description: 'description',
+  category: 'category',
   imagePath: 'imagePath',
   startPriceCents: 'startPriceCents',
   currentPriceCents: 'currentPriceCents',
@@ -209,6 +210,15 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.AuctionCategory = exports.$Enums.AuctionCategory = {
+  PAINTING: 'PAINTING',
+  SCULPTURE: 'SCULPTURE',
+  PHOTOGRAPHY: 'PHOTOGRAPHY',
+  DIGITAL_ART: 'DIGITAL_ART',
+  MIXED_MEDIA: 'MIXED_MEDIA',
+  DRAWING: 'DRAWING'
+};
+
 exports.AuctionStatus = exports.$Enums.AuctionStatus = {
   LIVE: 'LIVE',
   ENDED: 'ENDED',

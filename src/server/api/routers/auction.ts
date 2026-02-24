@@ -1,7 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { createAuctionSchema, placeBidSchema } from "~/lib/auctions/schema";
+import {
+  auctionCategorySchema,
+  auctionSortBySchema,
+  createAuctionSchema,
+  placeBidSchema,
+} from "~/lib/auctions/schema";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { placeBid } from "~/server/services/auction/bidding";
 import { settleExpiredAuctions } from "~/server/services/auction/settlement";
@@ -11,24 +16,38 @@ import {
   getSupabaseAdminClient,
 } from "~/server/storage/supabase";
 
+const listOpenInputSchema = z
+  .object({
+    query: z.string().trim().max(80).optional(),
+    category: auctionCategorySchema.optional(),
+    sortBy: auctionSortBySchema.optional(),
+  })
+  .optional();
+
 export const auctionRouter = createTRPCRouter({
-  listOpen: publicProcedure
-    .input(
-      z
-        .object({
-          query: z.string().trim().max(80).optional(),
-        })
-        .optional(),
-    )
-    .query(async ({ ctx, input }) => {
+  listOpen: publicProcedure.input(listOpenInputSchema).query(async ({ ctx, input }) => {
       const searchQuery = input?.query?.trim();
+      const category = input?.category;
+      const sortBy = input?.sortBy ?? "ending-soon";
       const now = new Date();
       await settleExpiredAuctions(ctx.db, now);
+
+      const orderBy =
+        sortBy === "newest"
+          ? [{ createdAt: "desc" as const }]
+          : sortBy === "price-low"
+            ? [{ currentPriceCents: "asc" as const }, { createdAt: "desc" as const }]
+            : sortBy === "price-high"
+              ? [{ currentPriceCents: "desc" as const }, { createdAt: "desc" as const }]
+              : sortBy === "most-bids"
+                ? [{ bidCount: "desc" as const }, { createdAt: "desc" as const }]
+                : [{ endsAt: "asc" as const }, { createdAt: "desc" as const }];
 
       const auctions = await ctx.db.auction.findMany({
         where: {
           status: "LIVE",
           endsAt: { gt: now },
+          ...(category ? { category } : {}),
           ...(searchQuery
             ? {
                 OR: [
@@ -38,17 +57,19 @@ export const auctionRouter = createTRPCRouter({
               }
             : {}),
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
         select: {
           id: true,
           title: true,
           description: true,
+          category: true,
           imagePath: true,
           startPriceCents: true,
           currentPriceCents: true,
           minIncrementCents: true,
           endsAt: true,
           createdAt: true,
+          bidCount: true,
           seller: {
             select: {
               id: true,
@@ -83,6 +104,7 @@ export const auctionRouter = createTRPCRouter({
             sellerId: ctx.session.user.id,
             title: input.title.trim(),
             description: input.description?.trim() ?? null,
+            category: input.category,
             imagePath: input.imagePath,
             startPriceCents: input.startPriceCents,
             currentPriceCents: input.startPriceCents,
@@ -93,6 +115,7 @@ export const auctionRouter = createTRPCRouter({
             id: true,
             title: true,
             endsAt: true,
+            category: true,
             imagePath: true,
             startPriceCents: true,
             currentPriceCents: true,

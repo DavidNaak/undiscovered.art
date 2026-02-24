@@ -2,10 +2,12 @@ import {
   MAX_UPLOAD_FILE_BYTES,
   isAllowedImageMimeType,
 } from "~/lib/auctions/schema";
+import { type AuctionCategoryValue } from "~/lib/auctions/categories";
 
 export type AuctionFormValues = {
   title: string;
   description: string;
+  category: AuctionCategoryValue;
   startPrice: string;
   minIncrement: string;
   endsAt: string;
@@ -21,6 +23,7 @@ export type SubmitPhase =
 export const DEFAULT_AUCTION_FORM_VALUES: AuctionFormValues = {
   title: "",
   description: "",
+  category: "PAINTING",
   startPrice: "100",
   minIncrement: "10",
   endsAt: "",

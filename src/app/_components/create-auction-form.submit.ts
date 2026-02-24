@@ -1,4 +1,7 @@
 import {
+  type AuctionCategoryValue,
+} from "~/lib/auctions/categories";
+import {
   createArtworkUploadSchema,
   createAuctionFormSchema,
   datetimeLocalToDate,
@@ -20,6 +23,7 @@ type UploadInitResponse = {
 type CreateAuctionMutationInput = {
   title: string;
   description?: string;
+  category: AuctionCategoryValue;
   imagePath: string;
   startPriceCents: number;
   minIncrementCents: number;
@@ -119,6 +123,7 @@ export async function submitCreateAuction({
   const parsedForm = createAuctionFormSchema.safeParse({
     title: value.title,
     description: value.description,
+    category: value.category,
     startPrice: value.startPrice,
     minIncrement: value.minIncrement,
     endsAt: value.endsAt,
@@ -153,6 +158,7 @@ export async function submitCreateAuction({
   await createAuction({
     title: parsedForm.data.title,
     description: parsedForm.data.description?.trim() ?? undefined,
+    category: parsedForm.data.category,
     imagePath,
     startPriceCents: dollarsToCents(parsedForm.data.startPrice),
     minIncrementCents: dollarsToCents(parsedForm.data.minIncrement),

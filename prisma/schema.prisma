@@ -21,6 +21,15 @@ enum AuctionStatus {
   CANCELLED
 }
 
+enum AuctionCategory {
+  PAINTING
+  SCULPTURE
+  PHOTOGRAPHY
+  DIGITAL_ART
+  MIXED_MEDIA
+  DRAWING
+}
+
 model User {
   id                    String    @id
   name                  String //@db.Text
@@ -45,6 +54,7 @@ model Auction {
   sellerId          String
   title             String
   description       String? //@db.Text
+  category          AuctionCategory @default(PAINTING)
   imagePath         String //@db.Text
   startPriceCents   Int
   currentPriceCents Int
@@ -61,6 +71,7 @@ model Auction {
   bids   Bid[]
 
   @@index([status, endsAt])
+  @@index([category, status, endsAt])
   @@index([settledAt, endsAt])
   @@index([sellerId, createdAt(sort: Desc)])
 }

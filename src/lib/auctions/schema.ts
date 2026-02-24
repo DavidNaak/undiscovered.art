@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { AUCTION_CATEGORY_VALUES } from "./categories";
+
 export const MAX_UPLOAD_FILE_BYTES = 5 * 1024 * 1024;
 export const MIN_BID_CENTS = 100;
 export const MAX_TITLE_LENGTH = 120;
@@ -17,6 +19,18 @@ const moneyStringSchema = z
   .trim()
   .regex(/^\d+(\.\d{1,2})?$/, "Use a valid amount (e.g. 120 or 120.50)");
 
+export const auctionCategorySchema = z.enum(AUCTION_CATEGORY_VALUES);
+export type AuctionCategory = z.infer<typeof auctionCategorySchema>;
+
+export const auctionSortBySchema = z.enum([
+  "ending-soon",
+  "newest",
+  "price-low",
+  "price-high",
+  "most-bids",
+]);
+export type AuctionSortBy = z.infer<typeof auctionSortBySchema>;
+
 export const createAuctionFormSchema = z.object({
   title: z
     .string()
@@ -31,6 +45,7 @@ export const createAuctionFormSchema = z.object({
       `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`,
     )
     .optional(),
+  category: auctionCategorySchema,
   startPrice: moneyStringSchema,
   minIncrement: moneyStringSchema,
   endsAt: z.string().trim().min(1, "End time is required"),
@@ -68,6 +83,7 @@ export const createAuctionSchema = z
       .trim()
       .max(MAX_DESCRIPTION_LENGTH)
       .optional(),
+    category: auctionCategorySchema,
     imagePath: z.string().trim().min(1).max(512),
     startPriceCents: z.number().int().min(MIN_BID_CENTS),
     minIncrementCents: z.number().int().min(MIN_BID_CENTS),

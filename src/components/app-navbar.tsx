@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { HandCoins, Menu, Search, Wallet } from "lucide-react";
+import { HandCoins, Menu, Wallet } from "lucide-react";
 
 import { getSession } from "~/server/better-auth/server";
 import { db } from "~/server/db";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -36,20 +35,6 @@ function isActivePath(currentPath: string, href: string): boolean {
   return currentPath.startsWith(href);
 }
 
-function SearchForm({ defaultQuery }: { defaultQuery?: string }) {
-  return (
-    <form action="/" method="GET" className="relative w-full">
-      <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
-      <Input
-        name="q"
-        defaultValue={defaultQuery ?? ""}
-        placeholder="Search auctions..."
-        className="h-9 rounded-xl bg-white pl-9"
-      />
-    </form>
-  );
-}
-
 function WalletSummary({
   availableCents,
   inBidsCents,
@@ -78,10 +63,8 @@ function WalletSummary({
 
 export async function AppNavbar({
   currentPath,
-  searchQuery,
 }: {
   currentPath: string;
-  searchQuery?: string;
 }) {
   const session = await getSession();
   const userId = session?.user?.id;
@@ -106,9 +89,9 @@ export async function AppNavbar({
     : null;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-200/80 bg-zinc-50/90 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/" className="shrink-0 text-sm font-semibold tracking-tight sm:text-base">
+    <header className="border-border/80 bg-background/80 sticky top-0 z-40 border-b backdrop-blur-md">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="font-serif shrink-0 text-lg leading-none font-semibold tracking-tight">
           Undiscovered Art
         </Link>
 
@@ -120,8 +103,8 @@ export async function AppNavbar({
               className={cn(
                 "rounded-lg px-3 py-2 text-sm font-medium transition",
                 isActivePath(currentPath, link.href)
-                  ? "bg-zinc-900 text-white"
-                  : "text-zinc-600 hover:bg-zinc-200/80 hover:text-zinc-900",
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {link.label}
@@ -129,9 +112,7 @@ export async function AppNavbar({
           ))}
         </nav>
 
-        <div className="hidden min-w-0 flex-1 lg:block">
-          <SearchForm defaultQuery={searchQuery} />
-        </div>
+        <div className="hidden min-w-0 flex-1 lg:block" />
 
         {walletSummary ? (
           <div className="hidden xl:block">
@@ -150,15 +131,10 @@ export async function AppNavbar({
             />
           ) : (
             <>
-              <Button
-                variant="outline"
-                render={<Link href="/login" />}
-              >
+              <Button variant="outline" className="rounded-full" render={<Link href="/login" />}>
                 Sign In
               </Button>
-              <Button
-                render={<a href={GITHUB_SIGN_IN_HREF} />}
-              >
+              <Button className="rounded-full bg-foreground text-background hover:bg-foreground/90" render={<a href={GITHUB_SIGN_IN_HREF} />}>
                 GitHub
               </Button>
             </>
@@ -178,12 +154,8 @@ export async function AppNavbar({
                 </SheetDescription>
               </SheetHeader>
 
-              <div className="mt-4">
-                <SearchForm defaultQuery={searchQuery} />
-              </div>
-
               {walletSummary ? (
-                <div className="mt-4">
+                <div className="mt-6">
                   <WalletSummary
                     availableCents={walletSummary.availableCents}
                     inBidsCents={walletSummary.inBidsCents}
@@ -199,8 +171,8 @@ export async function AppNavbar({
                     className={cn(
                       "rounded-lg px-3 py-2 text-sm font-medium transition",
                       isActivePath(currentPath, link.href)
-                        ? "bg-zinc-900 text-white"
-                        : "text-zinc-600 hover:bg-zinc-200/80 hover:text-zinc-900",
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                     )}
                   >
                     {link.label}
@@ -219,7 +191,9 @@ export async function AppNavbar({
                     <Button variant="outline" render={<Link href="/login" />}>
                       Sign In
                     </Button>
-                    <Button render={<a href={GITHUB_SIGN_IN_HREF} />}>GitHub</Button>
+                    <Button className="bg-foreground text-background hover:bg-foreground/90" render={<a href={GITHUB_SIGN_IN_HREF} />}>
+                      GitHub
+                    </Button>
                   </>
                 )}
               </div>
