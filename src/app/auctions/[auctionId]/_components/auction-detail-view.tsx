@@ -97,15 +97,15 @@ export function AuctionDetailView({
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-6">
+        <div className="space-y-5">
+          <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-medium text-emerald-800">
+              <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">
                 {getAuctionCategoryLabel(auction.category)}
               </span>
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium",
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
                   timeRemaining.isEnded
                     ? "bg-muted text-muted-foreground"
                     : timeRemaining.isUrgent
@@ -117,19 +117,19 @@ export function AuctionDetailView({
                 {timeRemaining.isEnded ? "Ended" : `${timeRemaining.text} left`}
               </span>
             </div>
-            <h1 className="font-serif text-balance text-5xl leading-[1.05] font-semibold lg:text-6xl">
+            <h1 className="font-serif text-balance text-3xl leading-tight font-bold lg:text-4xl">
               {auction.title}
             </h1>
 
-            <div className="flex items-center gap-4">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-500">
-                <UserRound className="size-6" />
+            <div className="flex items-center gap-2">
+              <div className="bg-accent/20 text-accent flex size-7 shrink-0 items-center justify-center rounded-full">
+                <UserRound className="size-3.5" />
               </div>
-              <p className="text-3xl text-foreground/70">
+              <p className="text-base text-muted-foreground">
                 by{" "}
                 <Link
                   href={`/profile/${auction.seller.id}`}
-                  className="text-foreground transition-colors hover:text-accent"
+                  className="font-medium text-foreground transition-colors hover:text-accent"
                 >
                   {auction.seller.name ?? "Unknown artist"}
                 </Link>
