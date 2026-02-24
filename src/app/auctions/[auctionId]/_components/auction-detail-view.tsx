@@ -138,6 +138,7 @@ export function AuctionDetailView({
               <Button
                 variant="outline"
                 className="rounded-full"
+                nativeButton={false}
                 render={<Link href={`/profile/${auction.seller.id}`} />}
               >
                 View Profile

@@ -130,6 +130,7 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
     return (
       <Button
         className="h-12 rounded-full bg-foreground px-6 text-base text-background hover:bg-foreground/90"
+        nativeButton={false}
         render={<Link href="/login" />}
       >
         Sign in to create

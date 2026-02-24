@@ -235,6 +235,7 @@ export function AuctionQuickViewDialog({
               <Button
                 variant="outline"
                 className="h-11 w-full rounded-xl border-border bg-background font-semibold hover:border-accent hover:bg-accent hover:text-foreground"
+                nativeButton={false}
                 render={<Link href={`/auctions/${auction.id}`} />}
                 onClick={() => onOpenChange(false)}
               >

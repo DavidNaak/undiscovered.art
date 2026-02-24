@@ -43,7 +43,9 @@ export default async function MyBidsPage() {
             <p className="text-muted-foreground text-sm">
               Sign in to track your bids and outcomes.
             </p>
-            <Button render={<Link href="/login" />}>Sign in</Button>
+            <Button nativeButton={false} render={<Link href="/login" />}>
+              Sign in
+            </Button>
           </CardContent>
         </Card>
       </SitePageShell>

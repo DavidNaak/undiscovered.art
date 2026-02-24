@@ -136,12 +136,14 @@ export async function AppNavbar({
               <Button
                 variant="outline"
                 className="h-10 rounded-full px-4"
+                nativeButton={false}
                 render={<Link href="/login" />}
               >
                 Sign In
               </Button>
               <Button
                 className="h-10 rounded-full bg-foreground px-4 text-background hover:bg-foreground/90"
+                nativeButton={false}
                 render={<a href={GITHUB_SIGN_IN_HREF} />}
               >
                 GitHub
@@ -197,11 +199,12 @@ export async function AppNavbar({
                   />
                 ) : (
                   <>
-                    <Button variant="outline" render={<Link href="/login" />}>
+                    <Button variant="outline" nativeButton={false} render={<Link href="/login" />}>
                       Sign In
                     </Button>
                     <Button
                       className="bg-foreground text-background hover:bg-foreground/90"
+                      nativeButton={false}
                       render={<a href={GITHUB_SIGN_IN_HREF} />}
                     >
                       GitHub

@@ -260,6 +260,7 @@ export function MyBidsView({
                       <Button
                         variant="outline"
                         className="rounded-full"
+                        nativeButton={false}
                         render={<Link href={`/profile/${bid.sellerId}`} />}
                       >
                         View Profile
@@ -267,6 +268,7 @@ export function MyBidsView({
                       <Button
                         variant="outline"
                         className="rounded-full"
+                        nativeButton={false}
                         render={<Link href={`/auctions/${bid.auctionId}`} />}
                       >
                         View Auction
