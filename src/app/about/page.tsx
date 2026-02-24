@@ -196,7 +196,7 @@ export default function AboutPage() {
           <div className="grid gap-8 md:grid-cols-3">
             {HOW_IT_WORKS.map((item) => (
               <div key={item.step} className="group flex flex-col gap-4">
-                <span className="font-serif text-5xl font-bold text-accent/20 transition-colors group-hover:text-accent/40">
+                <span className="font-serif text-5xl font-bold text-accent/55 transition-colors group-hover:text-accent/80">
                   {item.step}
                 </span>
                 <h3 className="font-serif text-xl font-semibold text-foreground">{item.title}</h3>
