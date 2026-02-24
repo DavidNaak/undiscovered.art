@@ -54,6 +54,7 @@ export function AuctionCard({
   const minimumNextBidCents = auction.currentPriceCents + auction.minIncrementCents;
   const isSignedIn = Boolean(currentUserId);
   const isSeller = currentUserId === auction.seller.id;
+  const imageSrc = auction.imageUrl ?? "/auction-placeholder.svg";
 
   const placeBid = api.auction.placeBid.useMutation({
     onError: (error) => {
@@ -92,19 +93,13 @@ export function AuctionCard({
 
   return (
     <Card className="overflow-hidden">
-      {auction.imageUrl ? (
-        <Image
-          src={auction.imageUrl}
-          alt={auction.title}
-          className="h-48 w-full object-cover"
-          width={640}
-          height={480}
-        />
-      ) : (
-        <div className="flex h-48 w-full items-center justify-center bg-muted text-sm text-muted-foreground">
-          No image
-        </div>
-      )}
+      <Image
+        src={imageSrc}
+        alt={auction.title}
+        className="h-48 w-full object-cover"
+        width={640}
+        height={480}
+      />
       <CardHeader>
         <CardTitle>{auction.title}</CardTitle>
         <CardDescription>by {auction.seller.name ?? "Unknown artist"}</CardDescription>
@@ -119,7 +114,12 @@ export function AuctionCard({
             {currencyFormatter.format(auction.currentPriceCents / 100)}
           </span>
         </p>
-        <p className="text-muted-foreground">Ends {formatDate(auction.endsAt)}</p>
+        <p className="text-muted-foreground">
+          Ends{" "}
+          <time dateTime={auction.endsAt.toISOString()} suppressHydrationWarning>
+            {formatDate(auction.endsAt)}
+          </time>
+        </p>
         <p className="text-muted-foreground">
           Next minimum bid {currencyFormatter.format(minimumNextBidCents / 100)}
         </p>
