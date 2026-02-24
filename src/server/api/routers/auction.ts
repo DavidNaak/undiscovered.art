@@ -177,6 +177,40 @@ export const auctionRouter = createTRPCRouter({
                 });
               }
 
+              const currentLeadingBid = await tx.bid.findFirst({
+                where: { auctionId: auction.id },
+                orderBy: [{ amountCents: "desc" }, { createdAt: "desc" }],
+                select: {
+                  bidderId: true,
+                  amountCents: true,
+                },
+              });
+
+              const requiredAdditionalHoldCents =
+                currentLeadingBid?.bidderId === ctx.session.user.id
+                  ? input.amountCents - currentLeadingBid.amountCents
+                  : input.amountCents;
+
+              if (requiredAdditionalHoldCents > 0) {
+                const reserveResult = await tx.user.updateMany({
+                  where: {
+                    id: ctx.session.user.id,
+                    availableBalanceCents: { gte: requiredAdditionalHoldCents },
+                  },
+                  data: {
+                    availableBalanceCents: { decrement: requiredAdditionalHoldCents },
+                    reservedBalanceCents: { increment: requiredAdditionalHoldCents },
+                  },
+                });
+
+                if (reserveResult.count !== 1) {
+                  throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: "Insufficient available balance",
+                  });
+                }
+              }
+
               const updateResult = await tx.auction.updateMany({
                 where: {
                   id: auction.id,
@@ -195,6 +229,29 @@ export const auctionRouter = createTRPCRouter({
                   code: "CONFLICT",
                   message: "Auction price changed. Refresh and try again.",
                 });
+              }
+
+              if (
+                currentLeadingBid &&
+                currentLeadingBid.bidderId !== ctx.session.user.id
+              ) {
+                const releaseResult = await tx.user.updateMany({
+                  where: {
+                    id: currentLeadingBid.bidderId,
+                    reservedBalanceCents: { gte: currentLeadingBid.amountCents },
+                  },
+                  data: {
+                    availableBalanceCents: { increment: currentLeadingBid.amountCents },
+                    reservedBalanceCents: { decrement: currentLeadingBid.amountCents },
+                  },
+                });
+
+                if (releaseResult.count !== 1) {
+                  throw new TRPCError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: "Could not release previous leading bid hold",
+                  });
+                }
               }
 
               const bid = await tx.bid.create({

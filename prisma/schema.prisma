@@ -22,17 +22,19 @@ enum AuctionStatus {
 }
 
 model User {
-  id            String    @id
-  name          String //@db.Text
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String? //@db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  sellerAuctions Auction[] @relation("SellerAuctions")
-  bids          Bid[]      @relation("UserBids")
+  id                    String    @id
+  name                  String //@db.Text
+  email                 String
+  emailVerified         Boolean   @default(false)
+  image                 String? //@db.Text
+  availableBalanceCents Int       @default(100000)
+  reservedBalanceCents  Int       @default(0)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now()) @updatedAt
+  sessions              Session[]
+  accounts              Account[]
+  sellerAuctions        Auction[] @relation("SellerAuctions")
+  bids                  Bid[]     @relation("UserBids")
 
   @@unique([email])
   @@map("user")
