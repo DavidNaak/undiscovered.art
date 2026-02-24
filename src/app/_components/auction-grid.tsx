@@ -24,12 +24,7 @@ export function AuctionGrid({
   ));
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="font-serif text-2xl font-semibold tracking-tight">Open Auctions</h2>
-        <p className="text-muted-foreground text-xs">Auto-refreshing every 2s</p>
-      </div>
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {isLoading
           ? skeletonCards
           : auctions.map((auction) => (
@@ -50,7 +45,6 @@ export function AuctionGrid({
             </CardContent>
           </Card>
         ) : null}
-      </div>
     </div>
   );
 }

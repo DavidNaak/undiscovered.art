@@ -95,7 +95,7 @@ export async function AppNavbar({
         <div className="flex items-center gap-8">
           <Link
             href="/"
-            className="font-serif shrink-0 text-[30px] leading-none font-semibold tracking-tight"
+            className="font-serif shrink-0 text-[20px] leading-none font-semibold tracking-tight"
           >
             Undiscovered Art
           </Link>

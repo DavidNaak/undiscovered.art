@@ -54,17 +54,12 @@ export function AuctionHouse({
   const resultCount = auctionListQuery.data ? auctionListQuery.data.length : null;
 
   return (
-    <div className="space-y-10">
-      <section className="flex flex-col items-start gap-6 pb-2 md:flex-row md:items-end md:justify-between">
-        <div className="max-w-2xl space-y-4">
-          <h1 className="font-serif text-4xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-            Undiscovered Art
-            <br />
-            <span className="text-accent">Auction House</span>
-          </h1>
-          <p className="text-muted-foreground text-base leading-relaxed sm:text-lg">
-            Launch timed auctions for your work, discover active pieces from other
-            artists, and bid with server-validated, concurrency-safe rules.
+    <div className="space-y-8">
+      <section className="flex flex-col gap-5 pb-1 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-2">
+          <h1 className="font-serif text-5xl font-semibold tracking-tight">Open Auctions</h1>
+          <p className="text-muted-foreground text-base sm:text-lg">
+            Discover and bid on artwork from emerging artists worldwide.
           </p>
         </div>
 
