@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -53,14 +53,16 @@ export function UserMenu({
         <span className="hidden sm:inline">{displayName}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
+        <div className="px-2 py-1.5">
           <p className="truncate text-sm font-medium text-zinc-900">{displayName}</p>
           <p className="truncate text-xs font-normal text-zinc-500">{email}</p>
-        </DropdownMenuLabel>
+        </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/" />}>Home</DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/my-bids" />}>My Bids</DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/about" />}>About</DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem render={<Link href="/" />}>Home</DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/my-bids" />}>My Bids</DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/about" />}>About</DropdownMenuItem>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

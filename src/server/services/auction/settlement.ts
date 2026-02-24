@@ -1,10 +1,24 @@
-import { TRPCError } from "@trpc/server";
 import { Prisma, type PrismaClient } from "../../../../generated/prisma";
 
 import { isRetryableTransactionError } from "./retryable";
 
 const MAX_SETTLEMENT_BATCH = 24;
 const MAX_SETTLEMENT_TRANSACTION_RETRIES = 3;
+
+async function markAuctionCancelledInSettlement(
+  tx: Prisma.TransactionClient,
+  auctionId: string,
+): Promise<void> {
+  await tx.auction.updateMany({
+    where: {
+      id: auctionId,
+      status: "ENDED",
+    },
+    data: {
+      status: "CANCELLED",
+    },
+  });
+}
 
 export async function settleAuctionInTransaction(
   tx: Prisma.TransactionClient,
@@ -81,11 +95,50 @@ export async function settleAuctionInTransaction(
     },
   });
 
-  if (winnerDebitResult.count !== 1) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Could not settle winner balance",
+  if (winnerDebitResult.count === 1) {
+    await tx.user.update({
+      where: { id: auction.sellerId },
+      data: {
+        availableBalanceCents: { increment: winningBid.amountCents },
+      },
     });
+    return;
+  }
+
+  const winnerBalances = await tx.user.findUnique({
+    where: { id: winningBid.bidderId },
+    select: {
+      availableBalanceCents: true,
+      reservedBalanceCents: true,
+    },
+  });
+
+  if (!winnerBalances) {
+    await markAuctionCancelledInSettlement(tx, auction.id);
+    return;
+  }
+
+  const reservedToSpend = Math.min(
+    winnerBalances.reservedBalanceCents,
+    winningBid.amountCents,
+  );
+  const neededFromAvailable = winningBid.amountCents - reservedToSpend;
+
+  const fallbackDebitResult = await tx.user.updateMany({
+    where: {
+      id: winningBid.bidderId,
+      availableBalanceCents: { gte: neededFromAvailable },
+      reservedBalanceCents: { gte: reservedToSpend },
+    },
+    data: {
+      availableBalanceCents: { decrement: neededFromAvailable },
+      reservedBalanceCents: { decrement: reservedToSpend },
+    },
+  });
+
+  if (fallbackDebitResult.count !== 1) {
+    await markAuctionCancelledInSettlement(tx, auction.id);
+    return;
   }
 
   await tx.user.update({
