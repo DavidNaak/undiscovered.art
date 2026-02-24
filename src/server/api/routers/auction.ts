@@ -122,7 +122,7 @@ export const auctionRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       for (let attempt = 1; attempt <= MAX_BID_TRANSACTION_RETRIES; attempt += 1) {
         try {
-          return await ctx.db.$transaction(
+          const transactionResult = await ctx.db.$transaction(
             async (tx) => {
               const now = new Date();
               const auction = await tx.auction.findUnique({
@@ -164,10 +164,7 @@ export const auctionRouter = createTRPCRouter({
                   });
                 }
 
-                throw new TRPCError({
-                  code: "BAD_REQUEST",
-                  message: "Auction is closed",
-                });
+                return { kind: "closed" as const };
               }
 
               const minimumNextBidCents =
@@ -216,16 +213,28 @@ export const auctionRouter = createTRPCRouter({
               });
 
               return {
-                ...bid,
-                currentPriceCents: input.amountCents,
-                bidCount: auction.bidCount + 1,
-                minimumNextBidCents: input.amountCents + auction.minIncrementCents,
+                kind: "placed" as const,
+                bid: {
+                  ...bid,
+                  currentPriceCents: input.amountCents,
+                  bidCount: auction.bidCount + 1,
+                  minimumNextBidCents: input.amountCents + auction.minIncrementCents,
+                },
               };
             },
             {
               isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
             },
           );
+
+          if (transactionResult.kind === "closed") {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Auction is closed",
+            });
+          }
+
+          return transactionResult.bid;
         } catch (error) {
           if (error instanceof TRPCError) {
             throw error;
