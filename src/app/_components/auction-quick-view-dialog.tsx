@@ -121,15 +121,15 @@ export function AuctionQuickViewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[20px] border-border p-0 sm:max-w-6xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto rounded-[20px] border-border p-0 sm:max-w-[min(92vw,86rem)]">
         <div className="flex flex-col sm:flex-row">
-          <div className="relative aspect-[4/5] w-full bg-secondary sm:w-[42%] sm:shrink-0">
+          <div className="relative aspect-[4/5] w-full bg-secondary sm:w-[45%] sm:shrink-0 sm:aspect-auto">
             <Image
               src={imageSrc}
               alt={auction.title}
               fill
               className="object-cover sm:rounded-l-[20px]"
-              sizes="(max-width: 640px) 100vw, 42vw"
+              sizes="(max-width: 640px) 100vw, 45vw"
             />
 
             {!timeRemaining.isEnded ? (
@@ -149,7 +149,7 @@ export function AuctionQuickViewDialog({
             ) : null}
           </div>
 
-          <div className="flex flex-1 flex-col gap-4 p-6">
+          <div className="flex flex-1 flex-col gap-5 p-6 md:p-8">
             <div>
               <Badge
                 className={cn(
@@ -209,11 +209,11 @@ export function AuctionQuickViewDialog({
                     min={minimumNextBidCents / 100}
                     step="1"
                     disabled={placeBid.isPending}
-                    className="h-11 rounded-lg border-accent/65 text-base focus-visible:ring-accent/40"
+                    className="h-11 rounded-xl border-accent/65 text-base focus-visible:ring-accent/40"
                   />
                   <Button
                     disabled={!canPlaceBid}
-                    className="h-11 rounded-lg bg-foreground px-6 font-semibold text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
+                    className="h-11 min-w-24 rounded-xl bg-foreground px-6 font-semibold text-background hover:bg-foreground/90 disabled:bg-muted disabled:text-muted-foreground"
                     onClick={handlePlaceBid}
                   >
                     {placeBid.isPending ? "Bidding..." : "Bid"}
@@ -231,10 +231,10 @@ export function AuctionQuickViewDialog({
               </p>
             )}
 
-            <div className="mt-auto flex gap-2">
+            <div className="flex gap-2 pt-1">
               <Button
                 variant="outline"
-                className="h-11 w-full rounded-lg border-border bg-background font-semibold hover:border-accent hover:bg-accent hover:text-foreground"
+                className="h-11 w-full rounded-xl border-border bg-background font-semibold hover:border-accent hover:bg-accent hover:text-foreground"
                 render={<Link href={`/auctions/${auction.id}`} />}
                 onClick={() => onOpenChange(false)}
               >
