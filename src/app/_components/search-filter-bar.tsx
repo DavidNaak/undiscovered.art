@@ -103,7 +103,11 @@ export function SearchFilterBar({
         >
           <SelectTrigger className="h-11 w-full rounded-xl sm:w-[220px]">
             <ArrowUpDown className="text-muted-foreground size-4" />
-            <SelectValue placeholder="Sort by" />
+            <SelectValue>
+              {(value) =>
+                SORT_OPTIONS.find((option) => option.value === value)?.label ?? "Sort by"
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {SORT_OPTIONS.map((option) => (
