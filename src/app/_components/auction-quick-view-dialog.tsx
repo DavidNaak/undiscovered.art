@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Clock, Gavel, TrendingUp } from "lucide-react";
+import { Clock, ExternalLink, Gavel, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { getAuctionCategoryLabel } from "~/lib/auctions/categories";
@@ -128,7 +128,7 @@ export function AuctionQuickViewDialog({
               src={imageSrc}
               alt={auction.title}
               fill
-              className="object-cover sm:rounded-l-[20px]"
+              className="object-contain sm:rounded-l-[20px]"
               sizes="(max-width: 640px) 100vw, 45vw"
             />
 
@@ -147,6 +147,17 @@ export function AuctionQuickViewDialog({
                 </span>
               </div>
             ) : null}
+
+            <a
+              href={imageSrc}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-card/90 text-foreground absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium backdrop-blur-sm transition hover:bg-card"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <ExternalLink className="size-3.5" />
+              Original
+            </a>
           </div>
 
           <div className="flex flex-1 flex-col gap-5 p-6 md:p-8">

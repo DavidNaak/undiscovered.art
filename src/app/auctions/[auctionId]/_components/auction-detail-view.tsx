@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, UserRound } from "lucide-react";
+import { Clock, ExternalLink, UserRound } from "lucide-react";
 
 import { getAuctionCategoryLabel, type AuctionCategoryValue } from "~/lib/auctions/categories";
 import { getPublicImageUrl } from "~/server/storage/supabase";
@@ -83,18 +83,31 @@ export function AuctionDetailView({
 
       <div className="grid gap-8 lg:grid-cols-[52%_48%]">
         <div className="space-y-4">
-          <div className="relative overflow-hidden rounded-2xl border border-border bg-secondary">
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-secondary/60">
+            <a
+              href={imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-card/90 text-foreground absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium backdrop-blur-sm transition hover:bg-card"
+            >
+              <ExternalLink className="size-3.5" />
+              Open original
+            </a>
             <div className="relative aspect-[4/5]">
               <Image
                 src={imageUrl}
                 alt={auction.title}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="(max-width: 1024px) 100vw, 52vw"
                 priority
               />
             </div>
           </div>
+          <p className="text-muted-foreground text-xs">
+            Full image preview shown here. Use <span className="font-medium">Open original</span>{" "}
+            for native zoom.
+          </p>
         </div>
 
         <div className="space-y-5">

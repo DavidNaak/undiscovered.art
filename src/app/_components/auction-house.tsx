@@ -1,14 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 
 import { AUCTION_CATEGORY_OPTIONS, type AuctionCategoryValue } from "~/lib/auctions/categories";
 import { type AuctionSortBy } from "~/lib/auctions/schema";
 import { authClient } from "~/server/better-auth/client";
 import { api } from "~/trpc/react";
 
+import { Button } from "@/components/ui/button";
 import { AuctionGrid } from "./auction-grid";
-import { CreateAuctionForm } from "./create-auction-form";
 import { SearchFilterBar } from "./search-filter-bar";
 import { type OpenAuction } from "./auction-types";
 
@@ -61,7 +63,24 @@ export function AuctionHouse() {
           </p>
         </div>
 
-        <CreateAuctionForm canCreate={canCreate} />
+        {canCreate ? (
+          <Button
+            className="h-12 rounded-full bg-foreground px-7 text-base text-background hover:bg-foreground/90"
+            nativeButton={false}
+            render={<Link href="/auctions/new" />}
+          >
+            <Plus className="size-4" />
+            Create Auction
+          </Button>
+        ) : (
+          <Button
+            className="h-12 rounded-full bg-foreground px-7 text-base text-background hover:bg-foreground/90"
+            nativeButton={false}
+            render={<Link href="/login" />}
+          >
+            Sign in to create
+          </Button>
+        )}
       </section>
 
       <SearchFilterBar

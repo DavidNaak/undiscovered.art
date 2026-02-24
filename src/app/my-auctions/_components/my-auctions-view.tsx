@@ -3,8 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -62,11 +64,22 @@ export function MyAuctionsView({
 
   return (
     <>
-      <section className="mb-6 space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight">My Auctions</h1>
-        <p className="text-sm text-zinc-600">
-          Your listings, current prices, and auction status.
-        </p>
+      <section className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold tracking-tight">My Auctions</h1>
+          <p className="text-sm text-zinc-600">
+            Your listings, current prices, and auction status.
+          </p>
+        </div>
+
+        <Button
+          className="h-10 w-fit rounded-full bg-foreground px-5 text-sm text-background hover:bg-foreground/90"
+          nativeButton={false}
+          render={<Link href="/auctions/new" />}
+        >
+          <Plus className="size-4" />
+          Create Auction
+        </Button>
       </section>
 
       {auctions.length === 0 ? (
