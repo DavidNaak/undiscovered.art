@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AUCTION_CATEGORY_OPTIONS, type AuctionCategoryValue } from "~/lib/auctions/categories";
 import { type AuctionSortBy } from "~/lib/auctions/schema";
+import { authClient } from "~/server/better-auth/client";
 import { api } from "~/trpc/react";
 
 import { AuctionGrid } from "./auction-grid";
@@ -11,13 +12,10 @@ import { CreateAuctionForm } from "./create-auction-form";
 import { SearchFilterBar } from "./search-filter-bar";
 import { type OpenAuction } from "./auction-types";
 
-export function AuctionHouse({
-  canCreate,
-  currentUserId,
-}: {
-  canCreate: boolean;
-  currentUserId: string | null;
-}) {
+export function AuctionHouse() {
+  const { data: session } = authClient.useSession();
+  const canCreate = Boolean(session?.user);
+  const currentUserId = session?.user?.id ?? null;
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<"ALL" | AuctionCategoryValue>("ALL");

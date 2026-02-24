@@ -1,16 +1,8 @@
-import { AppNavbar } from "@/components/app-navbar";
-
-export async function SitePageShell({
-  currentPath,
+export function SitePageShell({
   children,
 }: {
-  currentPath: string;
+  currentPath?: string;
   children: React.ReactNode;
 }) {
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <AppNavbar currentPath={currentPath} />
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
-    </div>
-  );
+  return <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>;
 }

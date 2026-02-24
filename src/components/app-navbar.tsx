@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { BriefcaseBusiness, HandCoins, Menu } from "lucide-react";
 
-import { getSession } from "~/server/better-auth/server";
-import { db } from "~/server/db";
+import { authClient } from "~/server/better-auth/client";
+import { api } from "~/trpc/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { UserMenu } from "./user-menu";
 
@@ -62,32 +66,28 @@ function WalletSummary({
   );
 }
 
-export async function AppNavbar({
-  currentPath,
-}: {
-  currentPath: string;
-}) {
-  const session = await getSession();
-  const userId = session?.user?.id;
+function WalletSummarySkeleton() {
+  return (
+    <div className="flex items-center gap-3 rounded-full border border-zinc-300/80 bg-white px-3.5 py-2 shadow-sm">
+      <Skeleton className="h-4 w-20" />
+      <div className="h-5 w-px bg-zinc-200" />
+      <Skeleton className="h-4 w-20" />
+    </div>
+  );
+}
 
-  const walletSummary = userId
-    ? await (async () => {
-        const userBalances = await db.user.findUnique({
-          where: { id: userId },
-          select: {
-            availableBalanceCents: true,
-            reservedBalanceCents: true,
-          },
-        });
+export function AppNavbar() {
+  const pathname = usePathname() ?? "/";
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const userId = session?.user?.id ?? null;
 
-        if (!userBalances) return null;
+  const walletSummaryQuery = api.user.walletSummary.useQuery(undefined, {
+    enabled: !!userId,
+    staleTime: 10_000,
+    refetchOnWindowFocus: false,
+  });
 
-        return {
-          availableCents: userBalances.availableBalanceCents,
-          inBidsCents: userBalances.reservedBalanceCents,
-        };
-      })()
-    : null;
+  const walletSummary = walletSummaryQuery.data;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-md">
@@ -107,7 +107,7 @@ export async function AppNavbar({
                 href={link.href}
                 className={cn(
                   "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
-                  isActivePath(currentPath, link.href)
+                  isActivePath(pathname, link.href)
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:text-foreground",
                 )}
@@ -119,18 +119,24 @@ export async function AppNavbar({
         </div>
 
         <div className="ml-auto hidden items-center gap-3 md:flex">
-          {walletSummary ? (
-            <WalletSummary
-              availableCents={walletSummary.availableCents}
-              inBidsCents={walletSummary.inBidsCents}
-            />
+          {userId ? (
+            walletSummary ? (
+              <WalletSummary
+                availableCents={walletSummary.availableCents}
+                inBidsCents={walletSummary.inBidsCents}
+              />
+            ) : (
+              <WalletSummarySkeleton />
+            )
           ) : null}
 
-          {session ? (
+          {session?.user ? (
             <UserMenu
               displayName={session.user.name || "Account"}
               email={session.user.email}
             />
+          ) : isSessionPending ? (
+            <Skeleton className="h-10 w-28 rounded-full" />
           ) : (
             <>
               <Button
@@ -165,12 +171,16 @@ export async function AppNavbar({
                 </SheetDescription>
               </SheetHeader>
 
-              {walletSummary ? (
+              {userId ? (
                 <div className="mt-6">
-                  <WalletSummary
-                    availableCents={walletSummary.availableCents}
-                    inBidsCents={walletSummary.inBidsCents}
-                  />
+                  {walletSummary ? (
+                    <WalletSummary
+                      availableCents={walletSummary.availableCents}
+                      inBidsCents={walletSummary.inBidsCents}
+                    />
+                  ) : (
+                    <WalletSummarySkeleton />
+                  )}
                 </div>
               ) : null}
 
@@ -181,7 +191,7 @@ export async function AppNavbar({
                     href={link.href}
                     className={cn(
                       "rounded-lg px-3 py-2 text-sm font-medium transition",
-                      isActivePath(currentPath, link.href)
+                      isActivePath(pathname, link.href)
                         ? "bg-foreground text-background"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                     )}
@@ -192,11 +202,13 @@ export async function AppNavbar({
               </nav>
 
               <div className="mt-6 flex flex-col gap-2">
-                {session ? (
+                {session?.user ? (
                   <UserMenu
                     displayName={session.user.name || "Account"}
                     email={session.user.email}
                   />
+                ) : isSessionPending ? (
+                  <Skeleton className="h-9 w-full rounded-md" />
                 ) : (
                   <>
                     <Button variant="outline" nativeButton={false} render={<Link href="/login" />}>

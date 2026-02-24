@@ -3,6 +3,7 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { DM_Sans, Geist_Mono, Playfair_Display } from "next/font/google";
 
+import { AppNavbar } from "@/components/app-navbar";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
@@ -35,7 +36,12 @@ export default function RootLayout({
       className={`${dmSans.variable} ${playfair.variable} ${geistMono.variable}`}
     >
       <body className="antialiased">
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          <div className="min-h-screen bg-background text-foreground">
+            <AppNavbar />
+            {children}
+          </div>
+        </TRPCReactProvider>
       </body>
     </html>
   );

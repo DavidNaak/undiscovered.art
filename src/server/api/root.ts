@@ -1,4 +1,5 @@
 import { auctionRouter } from "~/server/api/routers/auction";
+import { userRouter } from "~/server/api/routers/user";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -8,6 +9,7 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   auction: auctionRouter,
+  user: userRouter,
 });
 
 // export type definition of API

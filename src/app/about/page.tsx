@@ -11,7 +11,6 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { AppNavbar } from "@/components/app-navbar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -72,10 +71,7 @@ const STATS = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <AppNavbar currentPath="/about" />
-
-      <main>
+    <>
         <section className="relative overflow-hidden">
           <div className="mx-auto max-w-7xl px-4 lg:px-8">
             <div className="flex flex-col gap-8 py-16 lg:flex-row lg:items-center lg:gap-16 lg:py-24">
@@ -354,14 +350,12 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-      </main>
-
       <footer className="border-t border-border bg-secondary/50">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row lg:px-8">
           <span className="font-serif font-semibold text-foreground">Undiscovered Art</span>
           <p>Auction platform for emerging and established artists.</p>
         </div>
       </footer>
-    </div>
+    </>
   );
 }

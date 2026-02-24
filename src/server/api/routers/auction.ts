@@ -9,7 +9,6 @@ import {
 } from "~/lib/auctions/schema";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { placeBid } from "~/server/services/auction/bidding";
-import { settleExpiredAuctions } from "~/server/services/auction/settlement";
 import {
   getPublicImageUrl,
   getStorageBucket,
@@ -30,7 +29,6 @@ export const auctionRouter = createTRPCRouter({
       const category = input?.category;
       const sortBy = input?.sortBy ?? "ending-soon";
       const now = new Date();
-      await settleExpiredAuctions(ctx.db, now);
 
       const orderBy =
         sortBy === "newest"
