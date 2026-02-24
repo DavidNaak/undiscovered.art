@@ -1,11 +1,13 @@
 import { z } from "zod";
 
 import { AUCTION_CATEGORY_VALUES } from "./categories";
+import { AUCTION_CONDITION_VALUES } from "./conditions";
 
 export const MAX_UPLOAD_FILE_BYTES = 5 * 1024 * 1024;
 export const MIN_BID_CENTS = 100;
 export const MAX_TITLE_LENGTH = 120;
 export const MAX_DESCRIPTION_LENGTH = 2_000;
+export const MAX_DIMENSIONS_LENGTH = 64;
 
 export const ALLOWED_IMAGE_MIME_TYPES = [
   "image/jpeg",
@@ -21,6 +23,8 @@ const moneyStringSchema = z
 
 export const auctionCategorySchema = z.enum(AUCTION_CATEGORY_VALUES);
 export type AuctionCategory = z.infer<typeof auctionCategorySchema>;
+export const auctionConditionSchema = z.enum(AUCTION_CONDITION_VALUES);
+export type AuctionCondition = z.infer<typeof auctionConditionSchema>;
 
 export const auctionSortBySchema = z.enum([
   "ending-soon",
@@ -46,6 +50,27 @@ export const createAuctionFormSchema = z.object({
     )
     .optional(),
   category: auctionCategorySchema,
+  dimensions: z
+    .string()
+    .trim()
+    .min(2, "Dimensions must be at least 2 characters")
+    .max(
+      MAX_DIMENSIONS_LENGTH,
+      `Dimensions must be ${MAX_DIMENSIONS_LENGTH} characters or less`,
+    ),
+  condition: auctionConditionSchema,
+  artworkYear: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, "Use a 4-digit year")
+    .refine(
+      (value) => {
+        const year = Number(value);
+        const currentYear = new Date().getFullYear() + 1;
+        return year >= 1000 && year <= currentYear;
+      },
+      `Year must be between 1000 and ${new Date().getFullYear() + 1}`,
+    ),
   startPrice: moneyStringSchema,
   minIncrement: moneyStringSchema,
   endsAt: z.string().trim().min(1, "End time is required"),
@@ -84,6 +109,9 @@ export const createAuctionSchema = z
       .max(MAX_DESCRIPTION_LENGTH)
       .optional(),
     category: auctionCategorySchema,
+    dimensions: z.string().trim().min(2).max(MAX_DIMENSIONS_LENGTH),
+    condition: auctionConditionSchema,
+    artworkYear: z.number().int().min(1000).max(new Date().getFullYear() + 1),
     imagePath: z.string().trim().min(1).max(512),
     startPriceCents: z.number().int().min(MIN_BID_CENTS),
     minIncrementCents: z.number().int().min(MIN_BID_CENTS),

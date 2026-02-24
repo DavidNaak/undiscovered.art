@@ -2695,6 +2695,7 @@ export namespace Prisma {
   }
 
   export type AuctionAvgAggregateOutputType = {
+    artworkYear: number | null
     startPriceCents: number | null
     currentPriceCents: number | null
     minIncrementCents: number | null
@@ -2702,6 +2703,7 @@ export namespace Prisma {
   }
 
   export type AuctionSumAggregateOutputType = {
+    artworkYear: number | null
     startPriceCents: number | null
     currentPriceCents: number | null
     minIncrementCents: number | null
@@ -2714,6 +2716,9 @@ export namespace Prisma {
     title: string | null
     description: string | null
     category: $Enums.AuctionCategory | null
+    dimensions: string | null
+    condition: string | null
+    artworkYear: number | null
     imagePath: string | null
     startPriceCents: number | null
     currentPriceCents: number | null
@@ -2733,6 +2738,9 @@ export namespace Prisma {
     title: string | null
     description: string | null
     category: $Enums.AuctionCategory | null
+    dimensions: string | null
+    condition: string | null
+    artworkYear: number | null
     imagePath: string | null
     startPriceCents: number | null
     currentPriceCents: number | null
@@ -2752,6 +2760,9 @@ export namespace Prisma {
     title: number
     description: number
     category: number
+    dimensions: number
+    condition: number
+    artworkYear: number
     imagePath: number
     startPriceCents: number
     currentPriceCents: number
@@ -2768,6 +2779,7 @@ export namespace Prisma {
 
 
   export type AuctionAvgAggregateInputType = {
+    artworkYear?: true
     startPriceCents?: true
     currentPriceCents?: true
     minIncrementCents?: true
@@ -2775,6 +2787,7 @@ export namespace Prisma {
   }
 
   export type AuctionSumAggregateInputType = {
+    artworkYear?: true
     startPriceCents?: true
     currentPriceCents?: true
     minIncrementCents?: true
@@ -2787,6 +2800,9 @@ export namespace Prisma {
     title?: true
     description?: true
     category?: true
+    dimensions?: true
+    condition?: true
+    artworkYear?: true
     imagePath?: true
     startPriceCents?: true
     currentPriceCents?: true
@@ -2806,6 +2822,9 @@ export namespace Prisma {
     title?: true
     description?: true
     category?: true
+    dimensions?: true
+    condition?: true
+    artworkYear?: true
     imagePath?: true
     startPriceCents?: true
     currentPriceCents?: true
@@ -2825,6 +2844,9 @@ export namespace Prisma {
     title?: true
     description?: true
     category?: true
+    dimensions?: true
+    condition?: true
+    artworkYear?: true
     imagePath?: true
     startPriceCents?: true
     currentPriceCents?: true
@@ -2931,6 +2953,9 @@ export namespace Prisma {
     title: string
     description: string | null
     category: $Enums.AuctionCategory
+    dimensions: string | null
+    condition: string | null
+    artworkYear: number | null
     imagePath: string
     startPriceCents: number
     currentPriceCents: number
@@ -2969,6 +2994,9 @@ export namespace Prisma {
     title?: boolean
     description?: boolean
     category?: boolean
+    dimensions?: boolean
+    condition?: boolean
+    artworkYear?: boolean
     imagePath?: boolean
     startPriceCents?: boolean
     currentPriceCents?: boolean
@@ -2991,6 +3019,9 @@ export namespace Prisma {
     title?: boolean
     description?: boolean
     category?: boolean
+    dimensions?: boolean
+    condition?: boolean
+    artworkYear?: boolean
     imagePath?: boolean
     startPriceCents?: boolean
     currentPriceCents?: boolean
@@ -3011,6 +3042,9 @@ export namespace Prisma {
     title?: boolean
     description?: boolean
     category?: boolean
+    dimensions?: boolean
+    condition?: boolean
+    artworkYear?: boolean
     imagePath?: boolean
     startPriceCents?: boolean
     currentPriceCents?: boolean
@@ -3031,6 +3065,9 @@ export namespace Prisma {
     title?: boolean
     description?: boolean
     category?: boolean
+    dimensions?: boolean
+    condition?: boolean
+    artworkYear?: boolean
     imagePath?: boolean
     startPriceCents?: boolean
     currentPriceCents?: boolean
@@ -3044,7 +3081,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type AuctionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sellerId" | "title" | "description" | "category" | "imagePath" | "startPriceCents" | "currentPriceCents" | "minIncrementCents" | "startsAt" | "endsAt" | "status" | "settledAt" | "bidCount" | "createdAt" | "updatedAt", ExtArgs["result"]["auction"]>
+  export type AuctionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sellerId" | "title" | "description" | "category" | "dimensions" | "condition" | "artworkYear" | "imagePath" | "startPriceCents" | "currentPriceCents" | "minIncrementCents" | "startsAt" | "endsAt" | "status" | "settledAt" | "bidCount" | "createdAt" | "updatedAt", ExtArgs["result"]["auction"]>
   export type AuctionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     seller?: boolean | UserDefaultArgs<ExtArgs>
     bids?: boolean | Auction$bidsArgs<ExtArgs>
@@ -3069,6 +3106,9 @@ export namespace Prisma {
       title: string
       description: string | null
       category: $Enums.AuctionCategory
+      dimensions: string | null
+      condition: string | null
+      artworkYear: number | null
       imagePath: string
       startPriceCents: number
       currentPriceCents: number
@@ -3510,6 +3550,9 @@ export namespace Prisma {
     readonly title: FieldRef<"Auction", 'String'>
     readonly description: FieldRef<"Auction", 'String'>
     readonly category: FieldRef<"Auction", 'AuctionCategory'>
+    readonly dimensions: FieldRef<"Auction", 'String'>
+    readonly condition: FieldRef<"Auction", 'String'>
+    readonly artworkYear: FieldRef<"Auction", 'Int'>
     readonly imagePath: FieldRef<"Auction", 'String'>
     readonly startPriceCents: FieldRef<"Auction", 'Int'>
     readonly currentPriceCents: FieldRef<"Auction", 'Int'>
@@ -8361,6 +8404,9 @@ export namespace Prisma {
     title: 'title',
     description: 'description',
     category: 'category',
+    dimensions: 'dimensions',
+    condition: 'condition',
+    artworkYear: 'artworkYear',
     imagePath: 'imagePath',
     startPriceCents: 'startPriceCents',
     currentPriceCents: 'currentPriceCents',
@@ -8651,6 +8697,9 @@ export namespace Prisma {
     title?: StringFilter<"Auction"> | string
     description?: StringNullableFilter<"Auction"> | string | null
     category?: EnumAuctionCategoryFilter<"Auction"> | $Enums.AuctionCategory
+    dimensions?: StringNullableFilter<"Auction"> | string | null
+    condition?: StringNullableFilter<"Auction"> | string | null
+    artworkYear?: IntNullableFilter<"Auction"> | number | null
     imagePath?: StringFilter<"Auction"> | string
     startPriceCents?: IntFilter<"Auction"> | number
     currentPriceCents?: IntFilter<"Auction"> | number
@@ -8672,6 +8721,9 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrderInput | SortOrder
     category?: SortOrder
+    dimensions?: SortOrderInput | SortOrder
+    condition?: SortOrderInput | SortOrder
+    artworkYear?: SortOrderInput | SortOrder
     imagePath?: SortOrder
     startPriceCents?: SortOrder
     currentPriceCents?: SortOrder
@@ -8696,6 +8748,9 @@ export namespace Prisma {
     title?: StringFilter<"Auction"> | string
     description?: StringNullableFilter<"Auction"> | string | null
     category?: EnumAuctionCategoryFilter<"Auction"> | $Enums.AuctionCategory
+    dimensions?: StringNullableFilter<"Auction"> | string | null
+    condition?: StringNullableFilter<"Auction"> | string | null
+    artworkYear?: IntNullableFilter<"Auction"> | number | null
     imagePath?: StringFilter<"Auction"> | string
     startPriceCents?: IntFilter<"Auction"> | number
     currentPriceCents?: IntFilter<"Auction"> | number
@@ -8717,6 +8772,9 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrderInput | SortOrder
     category?: SortOrder
+    dimensions?: SortOrderInput | SortOrder
+    condition?: SortOrderInput | SortOrder
+    artworkYear?: SortOrderInput | SortOrder
     imagePath?: SortOrder
     startPriceCents?: SortOrder
     currentPriceCents?: SortOrder
@@ -8744,6 +8802,9 @@ export namespace Prisma {
     title?: StringWithAggregatesFilter<"Auction"> | string
     description?: StringNullableWithAggregatesFilter<"Auction"> | string | null
     category?: EnumAuctionCategoryWithAggregatesFilter<"Auction"> | $Enums.AuctionCategory
+    dimensions?: StringNullableWithAggregatesFilter<"Auction"> | string | null
+    condition?: StringNullableWithAggregatesFilter<"Auction"> | string | null
+    artworkYear?: IntNullableWithAggregatesFilter<"Auction"> | number | null
     imagePath?: StringWithAggregatesFilter<"Auction"> | string
     startPriceCents?: IntWithAggregatesFilter<"Auction"> | number
     currentPriceCents?: IntWithAggregatesFilter<"Auction"> | number
@@ -9144,6 +9205,9 @@ export namespace Prisma {
     title: string
     description?: string | null
     category?: $Enums.AuctionCategory
+    dimensions?: string | null
+    condition?: string | null
+    artworkYear?: number | null
     imagePath: string
     startPriceCents: number
     currentPriceCents: number
@@ -9165,6 +9229,9 @@ export namespace Prisma {
     title: string
     description?: string | null
     category?: $Enums.AuctionCategory
+    dimensions?: string | null
+    condition?: string | null
+    artworkYear?: number | null
     imagePath: string
     startPriceCents: number
     currentPriceCents: number
@@ -9184,6 +9251,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumAuctionCategoryFieldUpdateOperationsInput | $Enums.AuctionCategory
+    dimensions?: NullableStringFieldUpdateOperationsInput | string | null
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    artworkYear?: NullableIntFieldUpdateOperationsInput | number | null
     imagePath?: StringFieldUpdateOperationsInput | string
     startPriceCents?: IntFieldUpdateOperationsInput | number
     currentPriceCents?: IntFieldUpdateOperationsInput | number
@@ -9205,6 +9275,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumAuctionCategoryFieldUpdateOperationsInput | $Enums.AuctionCategory
+    dimensions?: NullableStringFieldUpdateOperationsInput | string | null
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    artworkYear?: NullableIntFieldUpdateOperationsInput | number | null
     imagePath?: StringFieldUpdateOperationsInput | string
     startPriceCents?: IntFieldUpdateOperationsInput | number
     currentPriceCents?: IntFieldUpdateOperationsInput | number
@@ -9225,6 +9298,9 @@ export namespace Prisma {
     title: string
     description?: string | null
     category?: $Enums.AuctionCategory
+    dimensions?: string | null
+    condition?: string | null
+    artworkYear?: number | null
     imagePath: string
     startPriceCents: number
     currentPriceCents: number
@@ -9243,6 +9319,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumAuctionCategoryFieldUpdateOperationsInput | $Enums.AuctionCategory
+    dimensions?: NullableStringFieldUpdateOperationsInput | string | null
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    artworkYear?: NullableIntFieldUpdateOperationsInput | number | null
     imagePath?: StringFieldUpdateOperationsInput | string
     startPriceCents?: IntFieldUpdateOperationsInput | number
     currentPriceCents?: IntFieldUpdateOperationsInput | number
@@ -9262,6 +9341,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumAuctionCategoryFieldUpdateOperationsInput | $Enums.AuctionCategory
+    dimensions?: NullableStringFieldUpdateOperationsInput | string | null
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    artworkYear?: NullableIntFieldUpdateOperationsInput | number | null
     imagePath?: StringFieldUpdateOperationsInput | string
     startPriceCents?: IntFieldUpdateOperationsInput | number
     currentPriceCents?: IntFieldUpdateOperationsInput | number
@@ -9808,6 +9890,17 @@ export namespace Prisma {
     not?: NestedEnumAuctionCategoryFilter<$PrismaModel> | $Enums.AuctionCategory
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type EnumAuctionStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.AuctionStatus | EnumAuctionStatusFieldRefInput<$PrismaModel>
     in?: $Enums.AuctionStatus[] | ListEnumAuctionStatusFieldRefInput<$PrismaModel>
@@ -9837,6 +9930,9 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrder
     category?: SortOrder
+    dimensions?: SortOrder
+    condition?: SortOrder
+    artworkYear?: SortOrder
     imagePath?: SortOrder
     startPriceCents?: SortOrder
     currentPriceCents?: SortOrder
@@ -9851,6 +9947,7 @@ export namespace Prisma {
   }
 
   export type AuctionAvgOrderByAggregateInput = {
+    artworkYear?: SortOrder
     startPriceCents?: SortOrder
     currentPriceCents?: SortOrder
     minIncrementCents?: SortOrder
@@ -9863,6 +9960,9 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrder
     category?: SortOrder
+    dimensions?: SortOrder
+    condition?: SortOrder
+    artworkYear?: SortOrder
     imagePath?: SortOrder
     startPriceCents?: SortOrder
     currentPriceCents?: SortOrder
@@ -9882,6 +9982,9 @@ export namespace Prisma {
     title?: SortOrder
     description?: SortOrder
     category?: SortOrder
+    dimensions?: SortOrder
+    condition?: SortOrder
+    artworkYear?: SortOrder
     imagePath?: SortOrder
     startPriceCents?: SortOrder
     currentPriceCents?: SortOrder
@@ -9896,6 +9999,7 @@ export namespace Prisma {
   }
 
   export type AuctionSumOrderByAggregateInput = {
+    artworkYear?: SortOrder
     startPriceCents?: SortOrder
     currentPriceCents?: SortOrder
     minIncrementCents?: SortOrder
@@ -9910,6 +10014,22 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumAuctionCategoryFilter<$PrismaModel>
     _max?: NestedEnumAuctionCategoryFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type EnumAuctionStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -10297,6 +10417,14 @@ export namespace Prisma {
     set?: $Enums.AuctionCategory
   }
 
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type EnumAuctionStatusFieldUpdateOperationsInput = {
     set?: $Enums.AuctionStatus
   }
@@ -10581,6 +10709,33 @@ export namespace Prisma {
     _max?: NestedEnumAuctionCategoryFilter<$PrismaModel>
   }
 
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
   export type NestedEnumAuctionStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.AuctionStatus | EnumAuctionStatusFieldRefInput<$PrismaModel>
     in?: $Enums.AuctionStatus[] | ListEnumAuctionStatusFieldRefInput<$PrismaModel>
@@ -10680,6 +10835,9 @@ export namespace Prisma {
     title: string
     description?: string | null
     category?: $Enums.AuctionCategory
+    dimensions?: string | null
+    condition?: string | null
+    artworkYear?: number | null
     imagePath: string
     startPriceCents: number
     currentPriceCents: number
@@ -10699,6 +10857,9 @@ export namespace Prisma {
     title: string
     description?: string | null
     category?: $Enums.AuctionCategory
+    dimensions?: string | null
+    condition?: string | null
+    artworkYear?: number | null
     imagePath: string
     startPriceCents: number
     currentPriceCents: number
@@ -10837,6 +10998,9 @@ export namespace Prisma {
     title?: StringFilter<"Auction"> | string
     description?: StringNullableFilter<"Auction"> | string | null
     category?: EnumAuctionCategoryFilter<"Auction"> | $Enums.AuctionCategory
+    dimensions?: StringNullableFilter<"Auction"> | string | null
+    condition?: StringNullableFilter<"Auction"> | string | null
+    artworkYear?: IntNullableFilter<"Auction"> | number | null
     imagePath?: StringFilter<"Auction"> | string
     startPriceCents?: IntFilter<"Auction"> | number
     currentPriceCents?: IntFilter<"Auction"> | number
@@ -10998,6 +11162,9 @@ export namespace Prisma {
     title: string
     description?: string | null
     category?: $Enums.AuctionCategory
+    dimensions?: string | null
+    condition?: string | null
+    artworkYear?: number | null
     imagePath: string
     startPriceCents: number
     currentPriceCents: number
@@ -11018,6 +11185,9 @@ export namespace Prisma {
     title: string
     description?: string | null
     category?: $Enums.AuctionCategory
+    dimensions?: string | null
+    condition?: string | null
+    artworkYear?: number | null
     imagePath: string
     startPriceCents: number
     currentPriceCents: number
@@ -11087,6 +11257,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumAuctionCategoryFieldUpdateOperationsInput | $Enums.AuctionCategory
+    dimensions?: NullableStringFieldUpdateOperationsInput | string | null
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    artworkYear?: NullableIntFieldUpdateOperationsInput | number | null
     imagePath?: StringFieldUpdateOperationsInput | string
     startPriceCents?: IntFieldUpdateOperationsInput | number
     currentPriceCents?: IntFieldUpdateOperationsInput | number
@@ -11107,6 +11280,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumAuctionCategoryFieldUpdateOperationsInput | $Enums.AuctionCategory
+    dimensions?: NullableStringFieldUpdateOperationsInput | string | null
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    artworkYear?: NullableIntFieldUpdateOperationsInput | number | null
     imagePath?: StringFieldUpdateOperationsInput | string
     startPriceCents?: IntFieldUpdateOperationsInput | number
     currentPriceCents?: IntFieldUpdateOperationsInput | number
@@ -11343,6 +11519,9 @@ export namespace Prisma {
     title: string
     description?: string | null
     category?: $Enums.AuctionCategory
+    dimensions?: string | null
+    condition?: string | null
+    artworkYear?: number | null
     imagePath: string
     startPriceCents: number
     currentPriceCents: number
@@ -11443,6 +11622,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumAuctionCategoryFieldUpdateOperationsInput | $Enums.AuctionCategory
+    dimensions?: NullableStringFieldUpdateOperationsInput | string | null
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    artworkYear?: NullableIntFieldUpdateOperationsInput | number | null
     imagePath?: StringFieldUpdateOperationsInput | string
     startPriceCents?: IntFieldUpdateOperationsInput | number
     currentPriceCents?: IntFieldUpdateOperationsInput | number
@@ -11462,6 +11644,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumAuctionCategoryFieldUpdateOperationsInput | $Enums.AuctionCategory
+    dimensions?: NullableStringFieldUpdateOperationsInput | string | null
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    artworkYear?: NullableIntFieldUpdateOperationsInput | number | null
     imagePath?: StringFieldUpdateOperationsInput | string
     startPriceCents?: IntFieldUpdateOperationsInput | number
     currentPriceCents?: IntFieldUpdateOperationsInput | number
@@ -11481,6 +11666,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumAuctionCategoryFieldUpdateOperationsInput | $Enums.AuctionCategory
+    dimensions?: NullableStringFieldUpdateOperationsInput | string | null
+    condition?: NullableStringFieldUpdateOperationsInput | string | null
+    artworkYear?: NullableIntFieldUpdateOperationsInput | number | null
     imagePath?: StringFieldUpdateOperationsInput | string
     startPriceCents?: IntFieldUpdateOperationsInput | number
     currentPriceCents?: IntFieldUpdateOperationsInput | number

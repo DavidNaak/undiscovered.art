@@ -1,12 +1,10 @@
 "use client";
 
-import { type RouterOutputs } from "~/trpc/react";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { AuctionCard } from "./auction-card";
 import { AuctionCardSkeleton } from "./auction-card-skeleton";
-
-type OpenAuction = RouterOutputs["auction"]["listOpen"];
+import { type OpenAuction } from "./auction-types";
 
 export function AuctionGrid({
   auctions,
@@ -15,7 +13,7 @@ export function AuctionGrid({
   activeCategory,
   debouncedSearch,
 }: {
-  auctions: OpenAuction;
+  auctions: OpenAuction[];
   isLoading: boolean;
   currentUserId: string | null;
   activeCategory: string;

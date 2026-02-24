@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AUCTION_CATEGORY_OPTIONS, type AuctionCategoryValue } from "~/lib/auctions/categories";
 import { type AuctionSortBy } from "~/lib/auctions/schema";
-import { type RouterOutputs, api } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 import { AuctionGrid } from "./auction-grid";
 import { CreateAuctionForm } from "./create-auction-form";
 import { SearchFilterBar } from "./search-filter-bar";
+import { type OpenAuction } from "./auction-types";
 
 export function AuctionHouse({
   canCreate,
@@ -46,7 +47,7 @@ export function AuctionHouse({
       refetchOnWindowFocus: true,
     },
   );
-  const openAuctions: RouterOutputs["auction"]["listOpen"] = auctionListQuery.data ?? [];
+  const openAuctions: OpenAuction[] = auctionListQuery.data ?? [];
   const isInitialLoading =
     auctionListQuery.isLoading ||
     (auctionListQuery.isFetching && auctionListQuery.data === undefined);

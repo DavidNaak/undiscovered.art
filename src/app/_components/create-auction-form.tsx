@@ -8,14 +8,17 @@ import {
   CalendarIcon,
   DollarSign,
   ImageIcon,
+  Info,
   Plus,
+  Ruler,
   Type,
   Upload,
   X,
 } from "lucide-react";
 
 import { AUCTION_CATEGORY_OPTIONS } from "~/lib/auctions/categories";
-import { auctionCategorySchema, createAuctionFormSchema } from "~/lib/auctions/schema";
+import { AUCTION_CONDITION_OPTIONS } from "~/lib/auctions/conditions";
+import { auctionCategorySchema, auctionConditionSchema, createAuctionFormSchema } from "~/lib/auctions/schema";
 import { api } from "~/trpc/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -355,6 +358,118 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+            </form.Field>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <form.Field
+                name="dimensions"
+                validators={{
+                  onBlur: ({ value }) =>
+                    toFieldError(
+                      createAuctionFormSchema.shape.dimensions.safeParse(value).error
+                        ?.issues[0]?.message,
+                    ),
+                }}
+              >
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor={field.name} className="flex items-center gap-2">
+                      <Ruler className="text-muted-foreground size-4" />
+                      Dimensions
+                    </Label>
+                    <Input
+                      id={field.name}
+                      value={field.state.value}
+                      disabled={isBusy}
+                      onBlur={field.handleBlur}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                      placeholder="48 x 36 in"
+                      className="h-11 rounded-xl"
+                    />
+                    {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+                      <p className="text-sm text-red-500">
+                        {toFieldError(field.state.meta.errors[0])}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              </form.Field>
+
+              <form.Field
+                name="condition"
+                validators={{
+                  onBlur: ({ value }) =>
+                    toFieldError(
+                      createAuctionFormSchema.shape.condition.safeParse(value).error
+                        ?.issues[0]?.message,
+                    ),
+                }}
+              >
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Info className="text-muted-foreground size-4" />
+                      Condition
+                    </Label>
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(value) => {
+                        const parsedCondition = auctionConditionSchema.safeParse(value);
+                        if (parsedCondition.success) {
+                          field.handleChange(parsedCondition.data);
+                        }
+                      }}
+                      disabled={isBusy}
+                    >
+                      <SelectTrigger className="h-11 w-full rounded-xl">
+                        <SelectValue placeholder="Select condition" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AUCTION_CONDITION_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </form.Field>
+            </div>
+
+            <form.Field
+              name="artworkYear"
+              validators={{
+                onBlur: ({ value }) =>
+                  toFieldError(
+                    createAuctionFormSchema.shape.artworkYear.safeParse(value).error
+                      ?.issues[0]?.message,
+                  ),
+              }}
+            >
+              {(field) => (
+                <div className="space-y-2">
+                  <Label htmlFor={field.name} className="flex items-center gap-2">
+                    <CalendarIcon className="text-muted-foreground size-4" />
+                    Year
+                  </Label>
+                  <Input
+                    id={field.name}
+                    value={field.state.value}
+                    disabled={isBusy}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    placeholder="2026"
+                    inputMode="numeric"
+                    className="h-11 rounded-xl"
+                  />
+                  {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+                    <p className="text-sm text-red-500">
+                      {toFieldError(field.state.meta.errors[0])}
+                    </p>
+                  ) : null}
                 </div>
               )}
             </form.Field>

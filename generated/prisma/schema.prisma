@@ -55,6 +55,9 @@ model Auction {
   title             String
   description       String? //@db.Text
   category          AuctionCategory @default(PAINTING)
+  dimensions        String? //@db.Text
+  condition         String? //@db.Text
+  artworkYear       Int?
   imagePath         String //@db.Text
   startPriceCents   Int
   currentPriceCents Int

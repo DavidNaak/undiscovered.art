@@ -3,11 +3,15 @@ import {
   isAllowedImageMimeType,
 } from "~/lib/auctions/schema";
 import { type AuctionCategoryValue } from "~/lib/auctions/categories";
+import { type AuctionConditionValue } from "~/lib/auctions/conditions";
 
 export type AuctionFormValues = {
   title: string;
   description: string;
   category: AuctionCategoryValue;
+  dimensions: string;
+  condition: AuctionConditionValue;
+  artworkYear: string;
   startPrice: string;
   minIncrement: string;
   endsAt: string;
@@ -24,6 +28,9 @@ export const DEFAULT_AUCTION_FORM_VALUES: AuctionFormValues = {
   title: "",
   description: "",
   category: "PAINTING",
+  dimensions: "",
+  condition: "EXCELLENT",
+  artworkYear: String(new Date().getFullYear()),
   startPrice: "100",
   minIncrement: "10",
   endsAt: "",

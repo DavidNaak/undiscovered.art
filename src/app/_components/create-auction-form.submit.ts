@@ -1,6 +1,7 @@
 import {
   type AuctionCategoryValue,
 } from "~/lib/auctions/categories";
+import { type AuctionConditionValue } from "~/lib/auctions/conditions";
 import {
   createArtworkUploadSchema,
   createAuctionFormSchema,
@@ -24,6 +25,9 @@ type CreateAuctionMutationInput = {
   title: string;
   description?: string;
   category: AuctionCategoryValue;
+  dimensions: string;
+  condition: AuctionConditionValue;
+  artworkYear: number;
   imagePath: string;
   startPriceCents: number;
   minIncrementCents: number;
@@ -124,6 +128,9 @@ export async function submitCreateAuction({
     title: value.title,
     description: value.description,
     category: value.category,
+    dimensions: value.dimensions,
+    condition: value.condition,
+    artworkYear: value.artworkYear,
     startPrice: value.startPrice,
     minIncrement: value.minIncrement,
     endsAt: value.endsAt,
@@ -159,6 +166,9 @@ export async function submitCreateAuction({
     title: parsedForm.data.title,
     description: parsedForm.data.description?.trim() ?? undefined,
     category: parsedForm.data.category,
+    dimensions: parsedForm.data.dimensions,
+    condition: parsedForm.data.condition,
+    artworkYear: Number(parsedForm.data.artworkYear),
     imagePath,
     startPriceCents: dollarsToCents(parsedForm.data.startPrice),
     minIncrementCents: dollarsToCents(parsedForm.data.minIncrement),
