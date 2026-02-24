@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { TrendingUp } from "lucide-react";
+import { Gavel, TrendingUp } from "lucide-react";
 import { useState } from "react";
 
+import { cn } from "@/lib/utils";
 import { api } from "~/trpc/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,10 +33,18 @@ export function AuctionDetailBidForm({
   auctionId,
   currentPriceCents,
   minIncrementCents,
+  bidCount,
+  isLive,
+  canBid,
+  disabledReason,
 }: {
   auctionId: string;
   currentPriceCents: number;
   minIncrementCents: number;
+  bidCount: number;
+  isLive: boolean;
+  canBid: boolean;
+  disabledReason: string | null;
 }) {
   const router = useRouter();
   const utils = api.useUtils();
@@ -62,6 +71,7 @@ export function AuctionDetailBidForm({
     },
   });
   const canPlaceBid =
+    canBid &&
     parsedBidAmountCents !== null &&
     parsedBidAmountCents >= minimumNextBidCents &&
     !placeBid.isPending;
@@ -89,54 +99,74 @@ export function AuctionDetailBidForm({
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-        <TrendingUp className="size-3.5" />
+    <div className="space-y-4 rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <p className="text-muted-foreground text-xs font-medium tracking-[0.2em] uppercase">
+        {isLive ? "Current Bid" : "Final Price"}
+      </p>
+
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <p className="font-serif text-5xl leading-none font-semibold tracking-tight">
+          {currencyFormatter.format(currentPriceCents / 100)}
+        </p>
+        <div className="text-muted-foreground inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm">
+          <Gavel className="size-4" />
+          <span>{bidCount} bids</span>
+        </div>
+      </div>
+
+      <p className="text-muted-foreground flex items-center gap-2 text-sm">
+        <TrendingUp className="size-4" />
         Minimum bid: {currencyFormatter.format(minimumNextBidCents / 100)} (increment:{" "}
         {currencyFormatter.format(minIncrementCents / 100)})
       </p>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Input
           value={bidAmount}
           onChange={(event) => setBidAmount(event.target.value)}
-          placeholder={String(minimumNextBidCents / 100)}
+          placeholder={formatCentsForInput(minimumNextBidCents)}
           inputMode="decimal"
-          type="number"
-          min={minimumNextBidCents / 100}
-          step={minIncrementCents / 100}
-          disabled={placeBid.isPending}
-          className="h-11 rounded-lg"
+          type="text"
+          disabled={placeBid.isPending || !canBid}
+          className="h-14 rounded-xl border-border bg-background px-5 text-3xl font-medium tracking-tight sm:flex-1"
         />
         <Button
           disabled={!canPlaceBid}
-          className="h-11 rounded-lg bg-foreground text-background hover:bg-foreground/90"
+          className="h-14 rounded-xl bg-foreground px-8 text-xl font-semibold text-background hover:bg-foreground/90 sm:w-auto"
           onClick={handlePlaceBid}
         >
           {placeBid.isPending ? "Confirming..." : "Place Bid"}
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {quickBidAmounts.map((amountCents) => (
-          <Button
-            key={amountCents}
-            type="button"
-            variant="outline"
-            disabled={placeBid.isPending}
-            className="h-10 rounded-lg"
-            onClick={() => {
-              setErrorMessage(null);
-              setBidAmount(formatCentsForInput(amountCents));
-            }}
-          >
-            {currencyFormatter.format(amountCents / 100)}
-          </Button>
-        ))}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {quickBidAmounts.map((amountCents) => {
+          const isSelected = parsedBidAmountCents === amountCents;
+
+          return (
+            <Button
+              key={amountCents}
+              type="button"
+              variant="outline"
+              disabled={placeBid.isPending || !canBid}
+              className={cn(
+                "h-12 rounded-xl border-border bg-background text-3xl font-medium text-muted-foreground hover:border-accent hover:text-accent",
+                isSelected && "border-accent bg-accent/5 text-accent",
+              )}
+              onClick={() => {
+                setErrorMessage(null);
+                setBidAmount(formatCentsForInput(amountCents));
+              }}
+            >
+              {currencyFormatter.format(amountCents / 100)}
+            </Button>
+          );
+        })}
       </div>
 
-      {errorMessage ? (
-        <p className="text-xs text-red-500">{errorMessage}</p>
+      {errorMessage ? <p className="text-xs text-red-500">{errorMessage}</p> : null}
+      {!canBid && disabledReason ? (
+        <p className="text-muted-foreground text-sm">{disabledReason}</p>
       ) : null}
     </div>
   );

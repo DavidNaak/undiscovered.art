@@ -1,28 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, Gavel, UserRound } from "lucide-react";
+import { Clock, UserRound } from "lucide-react";
 
 import { getAuctionCategoryLabel, type AuctionCategoryValue } from "~/lib/auctions/categories";
 import { getPublicImageUrl } from "~/server/storage/supabase";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { AuctionDetailBidForm } from "./auction-detail-bid-form";
 import { AuctionDetailTabs } from "./auction-detail-tabs";
-
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
-
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
 
 function getTimeRemaining(endsAt: Date): { text: string; isEnded: boolean; isUrgent: boolean } {
   const diff = endsAt.getTime() - Date.now();
@@ -81,6 +66,11 @@ export function AuctionDetailView({
     currentUserId !== auction.seller.id &&
     auction.status === "LIVE" &&
     !timeRemaining.isEnded;
+  const disabledReason = !currentUserId
+    ? "Sign in to place bids."
+    : currentUserId === auction.seller.id
+      ? "You listed this auction."
+      : "Auction is no longer open for bidding.";
 
   return (
     <div className="space-y-6">
@@ -107,78 +97,57 @@ export function AuctionDetailView({
           </div>
         </div>
 
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">{getAuctionCategoryLabel(auction.category)}</Badge>
-              <Badge variant="outline" className={timeRemaining.isUrgent ? "text-red-600" : ""}>
-                <Clock className="mr-1 size-3" />
-                {timeRemaining.text}
-              </Badge>
-            </div>
-            <h1 className="font-serif text-4xl font-semibold text-balance">{auction.title}</h1>
-
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="bg-accent/15 text-accent flex size-12 shrink-0 items-center justify-center rounded-full">
-                  <UserRound className="size-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm">
-                    by{" "}
-                    <span className="font-medium text-foreground">
-                      {auction.seller.name ?? "Unknown artist"}
-                    </span>
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    Public profile and listings
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                className="rounded-full"
-                nativeButton={false}
-                render={<Link href={`/profile/${auction.seller.id}`} />}
+        <div className="space-y-6">
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-medium text-emerald-800">
+                {getAuctionCategoryLabel(auction.category)}
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium",
+                  timeRemaining.isEnded
+                    ? "bg-muted text-muted-foreground"
+                    : timeRemaining.isUrgent
+                      ? "bg-rose-100 text-rose-700"
+                      : "bg-secondary text-foreground/80",
+                )}
               >
-                View Profile
-              </Button>
+                <Clock className="size-3.5" />
+                {timeRemaining.isEnded ? "Ended" : `${timeRemaining.text} left`}
+              </span>
             </div>
-          </div>
+            <h1 className="font-serif text-balance text-5xl leading-[1.05] font-semibold lg:text-6xl">
+              {auction.title}
+            </h1>
 
-          <div className="space-y-3 rounded-xl border border-border bg-secondary/40 p-5">
-            <p className="text-muted-foreground text-xs uppercase tracking-wide">
-              {auction.status === "LIVE" ? "Current Bid" : "Final Price"}
-            </p>
-            <div className="flex items-end justify-between gap-2">
-              <p className="font-serif text-4xl font-semibold">
-                {currencyFormatter.format(auction.currentPriceCents / 100)}
-              </p>
-              <div className="text-muted-foreground inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-sm">
-                <Gavel className="size-4" />
-                <span>{auction.bidCount} bids</span>
+            <div className="flex items-center gap-4">
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-500">
+                <UserRound className="size-6" />
               </div>
+              <p className="text-3xl text-foreground/70">
+                by{" "}
+                <Link
+                  href={`/profile/${auction.seller.id}`}
+                  className="text-foreground transition-colors hover:text-accent"
+                >
+                  {auction.seller.name ?? "Unknown artist"}
+                </Link>
+              </p>
             </div>
-            <p className="text-muted-foreground text-xs">
-              Ends {formatDate(auction.endsAt)}
-            </p>
+
+            <div className="h-px w-full bg-border/90" />
           </div>
 
-          {canBid ? (
-            <AuctionDetailBidForm
-              auctionId={auction.id}
-              currentPriceCents={auction.currentPriceCents}
-              minIncrementCents={auction.minIncrementCents}
-            />
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              {!currentUserId
-                ? "Sign in to place bids."
-                : currentUserId === auction.seller.id
-                  ? "You listed this auction."
-                  : "Auction is no longer open for bidding."}
-            </p>
-          )}
+          <AuctionDetailBidForm
+            auctionId={auction.id}
+            currentPriceCents={auction.currentPriceCents}
+            minIncrementCents={auction.minIncrementCents}
+            bidCount={auction.bidCount}
+            isLive={auction.status === "LIVE" && !timeRemaining.isEnded}
+            canBid={canBid}
+            disabledReason={canBid ? null : disabledReason}
+          />
 
           <AuctionDetailTabs
             description={auction.description}

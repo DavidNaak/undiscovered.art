@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import { AUCTION_CATEGORY_OPTIONS } from "~/lib/auctions/categories";
-import { AUCTION_CONDITION_OPTIONS } from "~/lib/auctions/conditions";
+import { AUCTION_CONDITION_OPTIONS, getAuctionConditionLabel } from "~/lib/auctions/conditions";
 import { auctionCategorySchema, auctionConditionSchema, createAuctionFormSchema } from "~/lib/auctions/schema";
 import { api } from "~/trpc/react";
 import { cn } from "@/lib/utils";
@@ -348,7 +348,7 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
                     }}
                     disabled={isBusy}
                   >
-                    <SelectTrigger className="h-11 w-full rounded-xl">
+                    <SelectTrigger className="h-11 w-full rounded-xl data-[size=default]:h-11">
                       <SelectValue placeholder="Select a medium" />
                     </SelectTrigger>
                     <SelectContent>
@@ -424,8 +424,12 @@ export function CreateAuctionForm({ canCreate }: { canCreate: boolean }) {
                       }}
                       disabled={isBusy}
                     >
-                      <SelectTrigger className="h-11 w-full rounded-xl">
-                        <SelectValue placeholder="Select condition" />
+                      <SelectTrigger className="h-11 w-full rounded-xl data-[size=default]:h-11">
+                        <SelectValue placeholder="Select condition">
+                          {field.state.value
+                            ? getAuctionConditionLabel(field.state.value)
+                            : undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {AUCTION_CONDITION_OPTIONS.map((option) => (
