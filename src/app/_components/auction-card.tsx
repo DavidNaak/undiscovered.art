@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Clock, Eye, Gavel, Heart } from "lucide-react";
+import { Clock, Eye, Gavel } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { getAuctionCategoryLabel } from "~/lib/auctions/categories";
@@ -67,7 +67,6 @@ export function AuctionCard({
 }) {
   const router = useRouter();
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [liked, setLiked] = useState(false);
 
   const imageSrc = auction.imageUrl ?? "/auction-placeholder.svg";
   const categoryLabel = getAuctionCategoryLabel(auction.category);
@@ -127,7 +126,7 @@ export function AuctionCard({
             ) : null}
           </div>
 
-          <div className="absolute right-3 bottom-3 left-3 flex translate-y-2 items-center justify-between opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          <div className="absolute bottom-3 left-3 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <Button
               variant="secondary"
               size="sm"
@@ -140,23 +139,6 @@ export function AuctionCard({
               <Eye className="size-3.5" />
               Quick View
             </Button>
-
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                setLiked((previous) => !previous);
-              }}
-              className={cn(
-                "flex size-8 items-center justify-center rounded-full backdrop-blur-sm transition-all",
-                liked
-                  ? "bg-red-500 text-white"
-                  : "bg-card/80 text-foreground hover:bg-card",
-              )}
-              aria-label={liked ? "Remove from favorites" : "Add to favorites"}
-            >
-              <Heart className={cn("size-3.5", liked ? "fill-current" : "")} />
-            </button>
           </div>
 
           {timeRemaining.isEnded ? (
