@@ -21,6 +21,7 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "test:concurrency": "node scripts/test-place-bid-concurrency.mjs",
+    "test:settlement:cron": "node scripts/test-settlement-cron.mjs",
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit"
