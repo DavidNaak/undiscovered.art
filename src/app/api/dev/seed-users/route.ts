@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 
 import { env } from "~/env";
 import { auth } from "~/server/better-auth";
+import { db } from "~/server/db";
 
 export const runtime = "nodejs";
 
 const DEMO_USER_COUNT = 5;
 const DEMO_PASSWORD = "Password123!";
+const STARTING_BALANCE_CENTS = 5_000_000;
 
 export async function POST(request: Request) {
   if (env.NODE_ENV === "production") {
@@ -27,6 +29,16 @@ export async function POST(request: Request) {
           name,
           email,
           password: DEMO_PASSWORD,
+        },
+      });
+
+      await db.user.update({
+        where: {
+          email,
+        },
+        data: {
+          availableBalanceCents: STARTING_BALANCE_CENTS,
+          reservedBalanceCents: 0,
         },
       });
 

@@ -36,7 +36,7 @@ model User {
   email                 String
   emailVerified         Boolean   @default(false)
   image                 String? //@db.Text
-  availableBalanceCents Int       @default(100000)
+  availableBalanceCents Int       @default(5000000)
   reservedBalanceCents  Int       @default(0)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @default(now()) @updatedAt
