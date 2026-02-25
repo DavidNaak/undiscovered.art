@@ -70,7 +70,10 @@ export function AuctionDetailBidForm({
       toast.success("Bid placed", {
         description: `Your bid of ${currencyFormatter.format(placedBid.amountCents / 100)} is now leading.`,
       });
-      await utils.auction.listOpen.invalidate();
+      await Promise.all([
+        utils.auction.listOpen.invalidate(),
+        utils.user.walletSummary.invalidate(),
+      ]);
       router.refresh();
     },
   });
