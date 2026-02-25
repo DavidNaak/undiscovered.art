@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Gavel, TrendingUp } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { api } from "~/trpc/react";
@@ -63,9 +64,12 @@ export function AuctionDetailBidForm({
     onError: (error) => {
       setErrorMessage(error.message);
     },
-    onSuccess: async () => {
+    onSuccess: async (placedBid) => {
       setBidAmount("");
       setErrorMessage(null);
+      toast.success("Bid placed", {
+        description: `Your bid of ${currencyFormatter.format(placedBid.amountCents / 100)} is now leading.`,
+      });
       await utils.auction.listOpen.invalidate();
       router.refresh();
     },

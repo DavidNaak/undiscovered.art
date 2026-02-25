@@ -1,13 +1,14 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
 import { LoginForm } from "@/components/login-form";
 
-export default function LoginPage() {
-  const searchParams = useSearchParams();
-  const modeParam = searchParams.get("mode");
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const modeParam = resolvedSearchParams.mode;
   const initialMode = modeParam === "sign-up" || modeParam === "signup" ? "signUp" : "signIn";
 
   return (

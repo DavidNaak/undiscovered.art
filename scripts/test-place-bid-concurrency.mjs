@@ -416,6 +416,8 @@ async function createUser(label) {
       name: `${label}-${runTag}`,
       email: `${id}@example.test`,
       emailVerified: true,
+      availableBalanceCents: STARTING_BALANCE_CENTS,
+      reservedBalanceCents: 0,
     },
     select: { id: true, name: true, email: true },
   });

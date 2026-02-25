@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Clock, ExternalLink, Gavel, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { getAuctionCategoryLabel } from "~/lib/auctions/categories";
 import { api } from "~/trpc/react";
@@ -84,9 +85,12 @@ export function AuctionQuickViewDialog({
     onError: (error) => {
       setErrorMessage(error.message);
     },
-    onSuccess: async () => {
+    onSuccess: async (placedBid) => {
       setBidAmount("");
       setErrorMessage(null);
+      toast.success("Bid placed", {
+        description: `Your bid of ${currencyFormatter.format(placedBid.amountCents / 100)} is now leading.`,
+      });
       onOpenChange(false);
       await utils.auction.listOpen.invalidate();
       router.refresh();
