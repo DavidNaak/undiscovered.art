@@ -5,9 +5,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function AuctionCardSkeleton() {
   return (
-    <Card className="overflow-hidden border-border/90 bg-card pt-0 shadow-sm">
-      <Skeleton className="aspect-[4/5] w-full rounded-none" />
-      <CardContent className="space-y-4 p-4">
+    <Card className="overflow-hidden bg-transparent pt-0 shadow-none ring-0">
+      <div className="aspect-[4/5] w-full">
+        <Skeleton className="h-full w-full rounded-md" />
+      </div>
+      <CardContent className="space-y-4 px-1 pt-3 pb-0 sm:px-0">
         <div className="space-y-2">
           <Skeleton className="h-6 w-2/3" />
           <Skeleton className="h-4 w-1/2" />

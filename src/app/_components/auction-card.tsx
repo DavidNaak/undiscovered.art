@@ -79,7 +79,7 @@ export function AuctionCard({
   return (
     <>
       <Card
-        className="group relative cursor-pointer overflow-hidden border-border bg-card pt-0 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-foreground/5"
+        className="group relative cursor-pointer overflow-hidden bg-transparent pt-0 shadow-none ring-0 transition-transform duration-300 hover:-translate-y-0.5"
         role="button"
         tabIndex={0}
         onClick={handleOpenFullAuction}
@@ -90,40 +90,29 @@ export function AuctionCard({
           }
         }}
       >
-        <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
-          <Image
-            src={imageSrc}
-            alt={auction.title}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            width={640}
-            height={800}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/50 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <div className="relative aspect-[4/5] overflow-hidden">
+          <div className="absolute inset-0">
+            <div className="relative h-full w-full overflow-hidden">
+              <Image
+                src={imageSrc}
+                alt={auction.title}
+                fill
+                className="object-contain transition-transform duration-700 group-hover:scale-[1.02]"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/16 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-          <div className="absolute top-3 right-3 left-3 flex items-start justify-between">
+          <div className="absolute top-3 left-3 translate-y-1 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <Badge
               className={cn(
-                "rounded-full border-none px-2.5 py-1 text-[11px] font-medium",
+                "w-fit rounded-full border-none px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm",
                 getCategoryColorClass(categoryLabel),
               )}
             >
               {categoryLabel}
             </Badge>
-
-            {!timeRemaining.isEnded ? (
-              <Badge
-                className={cn(
-                  "gap-1 rounded-full border-none px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm",
-                  timeRemaining.isUrgent
-                    ? "bg-red-100/90 text-red-700"
-                    : "bg-card/85 text-foreground",
-                )}
-              >
-                <Clock className="size-3" />
-                {timeRemaining.label}
-              </Badge>
-            ) : null}
           </div>
 
           <div className="absolute bottom-3 left-3 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
@@ -150,7 +139,7 @@ export function AuctionCard({
           ) : null}
         </div>
 
-        <CardContent className="flex flex-1 flex-col gap-3 p-4">
+        <CardContent className="flex flex-1 flex-col gap-3 px-1 pt-3 pb-0 sm:px-0">
           <div>
             <h3 className="font-serif text-lg font-semibold leading-tight">{auction.title}</h3>
             <p className="text-muted-foreground mt-0.5 text-sm">
@@ -158,7 +147,23 @@ export function AuctionCard({
             </p>
           </div>
 
-          <div className="mt-auto flex items-end justify-between gap-2 border-t border-border pt-3">
+          <div className="mt-auto space-y-2 border-t border-border/70 pt-3">
+            <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+              <span
+                className={cn(
+                  "flex items-center gap-1.5",
+                  timeRemaining.isUrgent && !timeRemaining.isEnded && "text-rose-600",
+                )}
+              >
+                <Clock className="size-3.5" />
+                {timeRemaining.isEnded ? "Auction ended" : `${timeRemaining.label} remaining`}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Gavel className="size-3.5" />
+                {auction.bidCount} bids
+              </span>
+            </div>
+
             <div>
               <p className="text-muted-foreground text-[10px] uppercase tracking-[0.24em]">
                 {timeRemaining.isEnded ? "Final Bid" : "Current Bid"}
@@ -166,10 +171,6 @@ export function AuctionCard({
               <p className="font-serif text-xl font-bold">
                 {currencyFormatter.format(auction.currentPriceCents / 100)}
               </p>
-            </div>
-            <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-              <Gavel className="size-3.5" />
-              <span>{auction.bidCount} bids</span>
             </div>
           </div>
         </CardContent>

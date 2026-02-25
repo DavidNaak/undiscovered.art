@@ -83,12 +83,12 @@ export function AuctionDetailView({
 
       <div className="grid gap-8 lg:grid-cols-[52%_48%]">
         <div className="space-y-4">
-          <div className="relative overflow-hidden rounded-2xl border border-border bg-secondary/60">
+          <div className="group relative overflow-hidden rounded-2xl">
             <a
               href={imageUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-card/90 text-foreground absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium backdrop-blur-sm transition hover:bg-card"
+              className="bg-card/90 text-foreground absolute top-3 right-3 z-10 inline-flex translate-y-1 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium opacity-0 backdrop-blur-sm transition-all hover:bg-card group-hover:translate-y-0 group-hover:opacity-100 focus:translate-y-0 focus:opacity-100"
             >
               <ExternalLink className="size-3.5" />
               Open original
@@ -104,10 +104,6 @@ export function AuctionDetailView({
               />
             </div>
           </div>
-          <p className="text-muted-foreground text-xs">
-            Full image preview shown here. Use <span className="font-medium">Open original</span>{" "}
-            for native zoom.
-          </p>
         </div>
 
         <div className="space-y-5">
