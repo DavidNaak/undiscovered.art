@@ -5,6 +5,11 @@ import { isRetryableTransactionError } from "./retryable";
 const MAX_SETTLEMENT_BATCH = 24;
 const MAX_SETTLEMENT_TRANSACTION_RETRIES = 3;
 
+export type ExpiredSettlementRun = {
+  attemptedCount: number;
+  failureCount: number;
+};
+
 async function markAuctionCancelledInSettlement(
   tx: Prisma.TransactionClient,
   auctionId: string,
@@ -185,7 +190,7 @@ export async function settleAuctionById(
 export async function settleExpiredAuctions(
   db: PrismaClient,
   now: Date,
-): Promise<void> {
+): Promise<ExpiredSettlementRun> {
   const expiredAuctions = await db.auction.findMany({
     where: {
       settledAt: null,
@@ -197,14 +202,22 @@ export async function settleExpiredAuctions(
     take: MAX_SETTLEMENT_BATCH,
   });
 
+  let failureCount = 0;
+
   for (const expiredAuction of expiredAuctions) {
     try {
       await settleAuctionById(db, expiredAuction.id, now);
     } catch (error) {
+      failureCount += 1;
       console.error(
         `[AUCTION_SETTLEMENT] Failed to settle auction ${expiredAuction.id}`,
         error,
       );
     }
   }
+
+  return {
+    attemptedCount: expiredAuctions.length,
+    failureCount,
+  };
 }

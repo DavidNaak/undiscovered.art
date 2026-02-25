@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { SitePageShell } from "@/components/site-page-shell";
 import { getSession } from "~/server/better-auth/server";
 import { db } from "~/server/db";
-import { settleExpiredAuctions } from "~/server/services/auction/settlement";
 
 import { AuctionDetailView } from "./_components/auction-detail-view";
 
@@ -13,9 +12,6 @@ export default async function AuctionDetailPage({
   params: Promise<{ auctionId: string }>;
 }) {
   const { auctionId } = await params;
-  const now = new Date();
-  await settleExpiredAuctions(db, now);
-
   const session = await getSession();
 
   const auction = await db.auction.findUnique({
