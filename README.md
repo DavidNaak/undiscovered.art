@@ -1,107 +1,123 @@
 # undiscovered.art
 
-## Auction Seed Scripts
+Timed art auction house (eBay-style) built with Next.js, tRPC, Prisma/Postgres, Better Auth, and Supabase Storage.
 
-This repo includes a full workflow for preparing and seeding auction assets.
+## Quick Start
 
-### 1) Download public-domain artwork assets
-
-Command:
+1. Install deps
 
 ```bash
-pnpm db:prepare:artworks
+pnpm install
 ```
 
-Script:
-- `scripts/fetch-public-domain-paintings.mjs`
+2. Configure env (`.env`)
 
-What it does:
-- Pulls public-domain images from The Met Open Access API
-- Builds `public/images/seed-auctions/manifest.json`
-- Downloads image files into `public/images/seed-auctions`
-- Auto-tags each record with one of the app categories:
-  - `PAINTING`
-  - `SCULPTURE`
-  - `PHOTOGRAPHY`
-  - `DIGITAL_ART`
-  - `MIXED_MEDIA`
-  - `DRAWING`
-
-Optional env vars:
-- `SEED_AUCTION_COUNT` (default: `30`)
-- `SEED_AUCTION_CATEGORIES` (comma-separated list)
-- `SEED_AUCTION_QUERY` (extra global search bias, for example `modernism`)
-
-Back-compat aliases (still supported):
-- `SEED_PAINTING_COUNT`
-- `SEED_PAINTING_QUERY`
-- `pnpm db:prepare:paintings` (same script/behavior)
-
-Examples:
-
-```bash
-SEED_AUCTION_COUNT=30 pnpm db:prepare:artworks
-SEED_AUCTION_COUNT=36 SEED_AUCTION_CATEGORIES=PAINTING,SCULPTURE,PHOTOGRAPHY,DRAWING pnpm db:prepare:artworks
-SEED_AUCTION_QUERY=impressionism pnpm db:prepare:artworks
-```
-
-### 2) Seed auctions into DB + upload images to Supabase
-
-Command:
-
-```bash
-pnpm db:seed:auctions
-```
-
-Script:
-- `scripts/seed-demo-auctions.mjs`
-
-What it does:
-- Reads `public/images/seed-auctions/manifest.json`
-- Uploads each local file in `public/images/seed-auctions` to Supabase Storage
-- Creates auction rows in the database
-
-Required env vars:
+Required:
 - `DATABASE_URL`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_STORAGE_BUCKET` (or use default `auction-images`)
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL` (usually `http://localhost:3000`)
+- GitHub OAuth values if using GitHub sign-in
 
-Optional env vars:
-- `SUPABASE_STORAGE_BUCKET` (default: `auction-images`)
-- `DEMO_AUCTION_SEED_EMAILS` (comma-separated seller emails to target)
+3. Apply Prisma schema
 
-### 3) Reset auction data
+```bash
+pnpm db:push
+```
 
-Command:
+4. Run app
+
+```bash
+pnpm dev
+```
+
+## Demo Data (Recommended)
+
+Create users (from login page):
+- Use **Create 5 Demo Users**.
+- Demo users are initialized with **$50,000** balance.
+
+Reset auctions/bids:
 
 ```bash
 pnpm db:reset:auctions
 ```
 
-Script:
-- `scripts/reset-auction-data.mjs`
-
-What it does:
-- Clears auction/bid data so you can reseed from a clean state
-
-### 4) Run bid concurrency checks
-
-Command:
+Seed auctions + images + bids:
 
 ```bash
-pnpm test:concurrency
-```
-
-Script:
-- `scripts/test-place-bid-concurrency.mjs`
-
-What it does:
-- Runs transaction-level bidding and settlement race-condition checks
-
-## Typical End-to-End Flow
-
-```bash
-pnpm db:prepare:artworks
-pnpm db:reset:auctions
 pnpm db:seed:auctions
 ```
+
+What seed does:
+- uploads local assets from `public/images/seed-auctions` to Supabase Storage
+- creates 30 auctions across categories
+- sets most auctions around ~2 days remaining, with periodic longer ones (~5/7/9 days)
+- creates realistic bid ladders across different demo users
+- maintains available/reserved balances while seeding bids
+- auto-compresses oversized JPEGs to fit bucket upload limits
+
+## Useful Scripts
+
+- `pnpm dev` - run local app
+- `pnpm lint` - lint
+- `pnpm typecheck` - TypeScript check
+- `pnpm db:push` - sync Prisma schema
+- `pnpm db:reset:auctions` - delete auctions/bids + release reserved balances
+- `pnpm db:seed:auctions` - seed auctions/images/bids
+- `pnpm db:prepare:artworks` - regenerate seed manifest/images from Met Open Access
+- `pnpm test:concurrency` - integration-style concurrency checks for bidding/settlement
+- `pnpm test:settlement:cron` - integration-style cron settlement check
+
+## Architecture Decisions and Tradeoffs
+
+### Auction model
+- **English auction** (ascending bids).
+- Server validates each bid: auction live, minimum increment, seller cannot bid, sufficient funds.
+
+### Concurrency model
+- `placeBid` runs in **SERIALIZABLE** transaction + compare-and-set auction price update.
+- Retries on serialization conflicts (`P2034`).
+- Funds are held in `reservedBalanceCents` for current leaders; previous leader hold is released.
+
+Why this approach:
+- strong correctness for take-home scope
+- lower operational complexity than queue/event-sourcing
+- easier to reason about than custom lock orchestration
+
+### Live updates
+- Client polling for list/detail freshness (simple and reliable for scope).
+- Confirmed-only bid UX (no optimistic “revert” confusion).
+
+### Settlement approach (old vs current)
+- Earlier approach settled during user-facing reads, which increased latency.
+- Current approach uses dedicated settlement service + cron endpoint:
+  - `GET /api/cron/settle-auctions`
+  - configured in `vercel.json` for every minute in deployment.
+
+## Localhost vs Vercel Settlement
+
+Important behavior:
+- On **Vercel**: scheduler hits `/api/cron/settle-auctions` every minute.
+- On **localhost**: no automatic scheduler runs by default.
+
+So locally, settlement happens when you:
+1. call cron endpoint manually, or
+2. attempt to place a bid on an expired auction (bid flow settles then rejects as closed).
+
+Therefore, “only bidding on expired auctions settles locally” is **not fully correct**; manual cron endpoint calls also settle locally.
+
+## Testing Notes
+
+- Concurrency and settlement test scripts exist and are runnable.
+- Cron settlement integration script is included (`pnpm test:settlement:cron`) to verify the cron path end-to-end against a running local server.
+- Due take-home time limits, this is script-based validation, not full CI coverage.
+
+## Known Limitations / Next Steps
+
+- Cron is external in production and manual in local unless separately scheduled.
+- Real-time UX is polling-based (WebSocket/Realtimes could be added later).
+- Storage upload currently favors pragmatic server flow; direct signed client upload can be added for higher scale.
+- More production hardening possible around observability, rate limits, and anti-sniping rules.
