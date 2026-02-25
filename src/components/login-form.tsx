@@ -25,27 +25,17 @@ import { Input } from "@/components/ui/input";
 
 type AuthMode = "signIn" | "signUp";
 
-type SeedUsersResponse = {
-  created?: Array<{
-    name: string;
-    email: string;
-    password: string;
-  }>;
-  error?: string;
-};
-
-const GITHUB_SIGN_IN_HREF =
-  "/api/auth/sign-in/social?provider=github&callbackURL=%2F";
-
-export function LoginForm({ className, ...props }: ComponentProps<"div">) {
+export function LoginForm({
+  className,
+  initialMode = "signIn",
+  ...props
+}: ComponentProps<"div"> & { initialMode?: AuthMode }) {
   const router = useRouter();
-  const [mode, setMode] = useState<AuthMode>("signIn");
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [seededUsers, setSeededUsers] = useState<SeedUsersResponse["created"]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -96,32 +86,25 @@ export function LoginForm({ className, ...props }: ComponentProps<"div">) {
     }
   }
 
-  async function handleSeedUsers() {
+  async function handleGitHubSignIn() {
     setErrorMessage(null);
     setSuccessMessage(null);
-    setIsSeeding(true);
 
     try {
-      const response = await fetch("/api/dev/seed-users", {
-        method: "POST",
+      const result = await authClient.signIn.social({
+        provider: "github",
+        callbackURL: "/",
+        requestSignUp: mode === "signUp",
       });
-      const json = (await response.json()) as SeedUsersResponse;
 
-      if (!response.ok) {
-        setErrorMessage(json.error ?? "Could not create demo users.");
-        setSeededUsers([]);
+      if (result.error) {
+        setErrorMessage(result.error.message ?? "Could not continue with GitHub.");
         return;
       }
-
-      setSeededUsers(json.created ?? []);
-      setSuccessMessage("Created 5 demo users.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Could not create demo users.",
+        error instanceof Error ? error.message : "Could not continue with GitHub.",
       );
-      setSeededUsers([]);
-    } finally {
-      setIsSeeding(false);
     }
   }
 
@@ -133,7 +116,9 @@ export function LoginForm({ className, ...props }: ComponentProps<"div">) {
             {mode === "signIn" ? "Welcome back" : "Create your account"}
           </CardTitle>
           <CardDescription>
-            Sign in with GitHub or use email and password.
+            {mode === "signIn"
+              ? "Sign in with GitHub or use email and password."
+              : "Sign up with GitHub or use email and password."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -143,9 +128,8 @@ export function LoginForm({ className, ...props }: ComponentProps<"div">) {
                 <Button
                   variant="outline"
                   type="button"
-                  onClick={() => {
-                    window.location.href = GITHUB_SIGN_IN_HREF;
-                  }}
+                  onClick={handleGitHubSignIn}
+                  disabled={isSubmitting}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -234,29 +218,6 @@ export function LoginForm({ className, ...props }: ComponentProps<"div">) {
                   {successMessage}
                 </FieldDescription>
               ) : null}
-
-              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                Dev helpers
-              </FieldSeparator>
-              <Field>
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={handleSeedUsers}
-                  disabled={isSeeding}
-                >
-                  {isSeeding ? "Creating 5 users..." : "Create 5 Demo Users"}
-                </Button>
-                {seededUsers && seededUsers.length > 0 ? (
-                  <div className="rounded border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700">
-                    {seededUsers.map((user) => (
-                      <p key={user.email}>
-                        {user.email} / {user.password}
-                      </p>
-                    ))}
-                  </div>
-                ) : null}
-              </Field>
             </FieldGroup>
           </form>
         </CardContent>

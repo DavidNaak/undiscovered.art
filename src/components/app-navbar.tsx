@@ -25,9 +25,6 @@ const usdFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-const GITHUB_SIGN_IN_HREF =
-  "/api/auth/sign-in/social?provider=github&callbackURL=%2F";
-
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/my-bids", label: "My Bids" },
@@ -145,14 +142,14 @@ export function AppNavbar() {
                 nativeButton={false}
                 render={<Link href="/login" />}
               >
-                Sign In
+                Sign in
               </Button>
               <Button
                 className="h-10 rounded-full bg-foreground px-4 text-background hover:bg-foreground/90"
                 nativeButton={false}
-                render={<a href={GITHUB_SIGN_IN_HREF} />}
+                render={<Link href="/login?mode=sign-up" />}
               >
-                GitHub
+                Sign up
               </Button>
             </>
           )}
@@ -212,14 +209,14 @@ export function AppNavbar() {
                 ) : (
                   <>
                     <Button variant="outline" nativeButton={false} render={<Link href="/login" />}>
-                      Sign In
+                      Sign in
                     </Button>
                     <Button
                       className="bg-foreground text-background hover:bg-foreground/90"
                       nativeButton={false}
-                      render={<a href={GITHUB_SIGN_IN_HREF} />}
+                      render={<Link href="/login?mode=sign-up" />}
                     >
-                      GitHub
+                      Sign up
                     </Button>
                   </>
                 )}
