@@ -10,87 +10,109 @@ import { AuctionCategory, PrismaClient } from "../generated/prisma/index.js";
 
 const ENV_FILE_NAME = ".env";
 const DEFAULT_BUCKET = "auction-images";
+const LOCAL_SEED_IMAGES_DIR = "public/images/seed-auctions";
+const LOCAL_SEED_MANIFEST_FILE = "manifest.json";
+const VALID_AUCTION_CATEGORIES = new Set(Object.values(AuctionCategory));
 
-const ARTWORK_SEED_DATA = [
-  {
-    fileName: "artwork-1.jpg",
-    title: "Terracotta Dreams",
-    description:
-      "Abstract oil on canvas with warm earth tones and thick impasto brushwork. 48x36 inches.",
-    category: AuctionCategory.PAINTING,
-    dimensions: "48 x 36 in",
-    condition: "EXCELLENT",
-    artworkYear: 2026,
-    startPriceCents: 240_000,
-    minIncrementCents: 5_000,
-    durationHours: 8,
-  },
-  {
-    fileName: "artwork-2.jpg",
-    title: "Still Waters",
-    description:
-      "Minimalist watercolor capturing a serene lakeside at dawn. Delicate washes on cold-pressed paper.",
-    category: AuctionCategory.DRAWING,
-    dimensions: "22 x 30 in",
-    condition: "VERY_GOOD",
-    artworkYear: 2025,
-    startPriceCents: 85_000,
-    minIncrementCents: 2_500,
-    durationHours: 14,
-  },
-  {
-    fileName: "artwork-3.jpg",
-    title: "Form in Motion",
-    description:
-      "Patinated bronze figure exploring the tension between stillness and movement. Limited edition 3/12.",
-    category: AuctionCategory.SCULPTURE,
-    dimensions: "18 x 9 x 7 in",
-    condition: "EXCELLENT",
-    artworkYear: 2026,
-    startPriceCents: 520_000,
-    minIncrementCents: 10_000,
-    durationHours: 20,
-  },
-  {
-    fileName: "artwork-4.jpg",
-    title: "Chromatic Shift #07",
-    description:
-      "Generative artwork exploring geometric harmony through algorithmic composition. 4K archival print.",
-    category: AuctionCategory.DIGITAL_ART,
-    dimensions: "40 x 30 in",
-    condition: "MINT",
-    artworkYear: 2026,
-    startPriceCents: 110_000,
-    minIncrementCents: 2_500,
-    durationHours: 26,
-  },
-  {
-    fileName: "artwork-5.jpg",
-    title: "Silent Witness",
-    description:
-      "Gelatin silver print on fiber-based paper. Dramatic chiaroscuro portrait from the Solitude series.",
-    category: AuctionCategory.PHOTOGRAPHY,
-    dimensions: "16 x 20 in",
-    condition: "EXCELLENT",
-    artworkYear: 2024,
-    startPriceCents: 180_000,
-    minIncrementCents: 5_000,
-    durationHours: 34,
-  },
-  {
-    fileName: "artwork-6.jpg",
-    title: "Palimpsest IV",
-    description:
-      "Layered mixed media combining acrylic, found paper, and wax on panel. 30x24 inches.",
-    category: AuctionCategory.MIXED_MEDIA,
-    dimensions: "30 x 24 in",
-    condition: "GOOD",
-    artworkYear: 2023,
-    startPriceCents: 310_000,
-    minIncrementCents: 7_500,
-    durationHours: 42,
-  },
-];
+function contentTypeForFileName(fileName) {
+  const extension = path.extname(fileName).toLowerCase();
+  if (extension === ".jpg" || extension === ".jpeg") return "image/jpeg";
+  if (extension === ".png") return "image/png";
+  if (extension === ".webp") return "image/webp";
+  if (extension === ".svg") return "image/svg+xml";
+  throw new Error(`Unsupported image extension for seed asset: ${fileName}`);
+}
+
+function normalizePositiveInteger(value, fieldName, fileName) {
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(
+      `Invalid "${fieldName}" in ${LOCAL_SEED_MANIFEST_FILE} for "${fileName}".`,
+    );
+  }
+  return value;
+}
+
+async function loadArtworkSeedData(imagesDirectory) {
+  const manifestPath = path.join(imagesDirectory, LOCAL_SEED_MANIFEST_FILE);
+  const manifestRaw = await fs.readFile(manifestPath, "utf8");
+  const parsed = JSON.parse(manifestRaw);
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error(
+      `${LOCAL_SEED_MANIFEST_FILE} must contain a non-empty JSON array.`,
+    );
+  }
+
+  return parsed.map((entry, index) => {
+    const fileName =
+      typeof entry?.fileName === "string" ? entry.fileName.trim() : "";
+    if (!fileName) {
+      throw new Error(
+        `Missing "fileName" for manifest item #${index + 1} in ${LOCAL_SEED_MANIFEST_FILE}.`,
+      );
+    }
+    if (path.isAbsolute(fileName) || fileName.includes("..")) {
+      throw new Error(
+        `Invalid "fileName" in ${LOCAL_SEED_MANIFEST_FILE}: "${fileName}".`,
+      );
+    }
+
+    const category =
+      typeof entry?.category === "string" ? entry.category : undefined;
+    if (!category || !VALID_AUCTION_CATEGORIES.has(category)) {
+      throw new Error(
+        `Invalid "category" in ${LOCAL_SEED_MANIFEST_FILE} for "${fileName}".`,
+      );
+    }
+
+    const title = typeof entry?.title === "string" ? entry.title.trim() : "";
+    const description =
+      typeof entry?.description === "string" ? entry.description.trim() : "";
+    const dimensions =
+      typeof entry?.dimensions === "string" ? entry.dimensions.trim() : "";
+    const condition =
+      typeof entry?.condition === "string" ? entry.condition.trim() : "";
+
+    if (!title || !description || !dimensions || !condition) {
+      throw new Error(
+        `Manifest item "${fileName}" is missing one of: title, description, dimensions, or condition.`,
+      );
+    }
+
+    const artworkYear = normalizePositiveInteger(
+      entry.artworkYear,
+      "artworkYear",
+      fileName,
+    );
+    const startPriceCents = normalizePositiveInteger(
+      entry.startPriceCents,
+      "startPriceCents",
+      fileName,
+    );
+    const minIncrementCents = normalizePositiveInteger(
+      entry.minIncrementCents,
+      "minIncrementCents",
+      fileName,
+    );
+    const durationHours = normalizePositiveInteger(
+      entry.durationHours,
+      "durationHours",
+      fileName,
+    );
+
+    return {
+      fileName,
+      title,
+      description,
+      category,
+      dimensions,
+      condition,
+      artworkYear,
+      startPriceCents,
+      minIncrementCents,
+      durationHours,
+    };
+  });
+}
 
 function parseEnvLine(line) {
   const trimmed = line.trim();
@@ -224,8 +246,9 @@ async function main() {
   const bucket = process.env.SUPABASE_STORAGE_BUCKET || DEFAULT_BUCKET;
   const imagesDirectory = path.resolve(
     process.cwd(),
-    "UI_EXAMPLE/public/images",
+    LOCAL_SEED_IMAGES_DIR,
   );
+  const artworkSeedData = await loadArtworkSeedData(imagesDirectory);
 
   const prisma = new PrismaClient();
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
@@ -237,8 +260,8 @@ async function main() {
     const now = Date.now();
     const createdAuctions = [];
 
-    for (let index = 0; index < ARTWORK_SEED_DATA.length; index += 1) {
-      const artwork = ARTWORK_SEED_DATA[index];
+    for (let index = 0; index < artworkSeedData.length; index += 1) {
+      const artwork = artworkSeedData[index];
       const seller = users[index % users.length];
       if (!seller) {
         throw new Error("Could not resolve seller for seeded auction.");
@@ -246,14 +269,16 @@ async function main() {
 
       const localImagePath = path.join(imagesDirectory, artwork.fileName);
       const imageBuffer = await fs.readFile(localImagePath);
+      const extension = path.extname(artwork.fileName).toLowerCase();
+      const contentType = contentTypeForFileName(artwork.fileName);
 
       const safeTitle = slugify(artwork.title);
-      const storagePath = `${seller.id}/seed/${safeTitle}-${randomUUID()}.jpg`;
+      const storagePath = `${seller.id}/seed/${safeTitle}-${randomUUID()}${extension}`;
 
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(storagePath, imageBuffer, {
-          contentType: "image/jpeg",
+          contentType,
           upsert: false,
         });
 
