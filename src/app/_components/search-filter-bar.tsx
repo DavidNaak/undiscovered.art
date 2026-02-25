@@ -14,6 +14,12 @@ type CategoryOption = {
   label: string;
 };
 
+const CATEGORY_BUTTON_BASE_CLASS =
+  "inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-all cursor-pointer";
+const CATEGORY_BUTTON_ACTIVE_CLASS = "border-foreground bg-foreground text-background";
+const CATEGORY_BUTTON_INACTIVE_CLASS =
+  "border-transparent bg-secondary text-muted-foreground hover:border-accent hover:bg-accent hover:text-foreground";
+
 const SORT_OPTIONS: Array<{ value: AuctionSortBy; label: string }> = [
   { value: "ending-soon", label: "Ending Soon" },
   { value: "newest", label: "Newest First" },
@@ -126,10 +132,10 @@ export function SearchFilterBar({
             type="button"
             onClick={() => onCategoryChange("ALL")}
             className={cn(
-              "inline-flex items-center rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-all",
+              CATEGORY_BUTTON_BASE_CLASS,
               activeCategory === "ALL"
-                ? "bg-foreground text-background"
-                : "bg-secondary text-muted-foreground hover:text-foreground",
+                ? CATEGORY_BUTTON_ACTIVE_CLASS
+                : CATEGORY_BUTTON_INACTIVE_CLASS,
             )}
           >
             All
@@ -140,10 +146,10 @@ export function SearchFilterBar({
               type="button"
               onClick={() => onCategoryChange(category.value)}
               className={cn(
-                "inline-flex items-center rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-all",
+                CATEGORY_BUTTON_BASE_CLASS,
                 activeCategory === category.value
-                  ? "bg-foreground text-background"
-                  : "bg-secondary text-muted-foreground hover:text-foreground",
+                  ? CATEGORY_BUTTON_ACTIVE_CLASS
+                  : CATEGORY_BUTTON_INACTIVE_CLASS,
               )}
             >
               {category.label}
